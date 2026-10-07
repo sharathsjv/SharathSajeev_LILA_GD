@@ -1,0 +1,351 @@
+{
+  "settings": {
+    "checkInDays": [2],
+    "reviewEveryDays": 5,
+    "tasksPerUnscriptedDay": 2,
+    "realSecondsPerDay": 900,
+    "dayStartHour": 9,
+    "dayEndHour": 17,
+    "talkCostMinutes": 20,
+    "askCostMinutes": 15,
+    "commitTrustRewards": [3, 2, 1, 1],
+    "wrongTrustPenalty": 1,
+    "maxTrust": 10,
+    "iconCycleSeconds": 0.18,
+    "qaTestSeconds": 60,
+    "reportCostMinutes": 30,
+    "startTitle": "QA Tester 1",
+    "promotedTitle": "QA Tester 2"
+  },
+
+  "icons": [
+    { "id": "coffee",   "label": "Coffee",    "shape": "circle",   "color": "#8B5A2B" },
+    { "id": "bug",      "label": "Bugs",      "shape": "hexagon",  "color": "#3FBF7F" },
+    { "id": "deadline", "label": "Deadline",  "shape": "ring",     "color": "#E5534B" },
+    { "id": "money",    "label": "Money",     "shape": "diamond",  "color": "#E0B020" },
+    { "id": "games",    "label": "Games",     "shape": "square",   "color": "#B07CF2" },
+    { "id": "lunch",    "label": "Lunch",     "shape": "triangle", "color": "#F28C28" },
+    { "id": "music",    "label": "Music",     "shape": "star",     "color": "#F25FA0" },
+    { "id": "pet",      "label": "Pets",      "shape": "heart",    "color": "#E5534B" },
+    { "id": "email",    "label": "Email",     "shape": "square",   "color": "#4F8EF7" },
+    { "id": "chart",    "label": "Metrics",   "shape": "triangle", "color": "#2BB5B0" },
+    { "id": "trophy",   "label": "Promotion", "shape": "star",     "color": "#E0B020" },
+    { "id": "gym",      "label": "Gym",       "shape": "cross",    "color": "#5A6B8C" },
+    { "id": "vacation", "label": "Vacation",  "shape": "circle",   "color": "#29B6F6" },
+    { "id": "robot",    "label": "AI tools",  "shape": "hexagon",  "color": "#7A869A" },
+    { "id": "rival",    "label": "Rivals",    "shape": "cross",    "color": "#C62828" },
+    { "id": "family",   "label": "Family",    "shape": "heart",    "color": "#F2B33D" }
+  ],
+
+  "characters": [
+    {
+      "id": "dana", "name": "Dana", "role": "QA Lead", "isBoss": true, "color": "#E5534B",
+      "greeting": "Oh - hi. Make it quick, I'm in the middle of something.",
+      "topics": [
+        { "icon": "chart", "minDay": 1,
+          "lines": ["The numbers just aren't where they need to be.",
+                    "Upstairs wants a line that only ever goes up.",
+                    "Bugs found per tester, per day. That's what I'm judged on.",
+                    "If our bug count drops, the dashboard turns red and I get a call."],
+          "reply": "Right. The dashboard. At least someone gets it.",
+          "wrongReply": "...No. Never mind." },
+        { "icon": "deadline", "minDay": 1,
+          "lines": ["Friday is going to be a nightmare.",
+                    "Victor moved something up again without asking me.",
+                    "Certification submission. Four days early.",
+                    "We need sign-off on every build by Friday, five o'clock, no excuses."],
+          "reply": "Exactly. So no slacking, okay?",
+          "wrongReply": "That's... not what I meant at all." },
+        { "icon": "email", "minDay": 2,
+          "lines": ["I've been getting some strange messages lately.",
+                    "Recruiters, mostly. Very persistent ones.",
+                    "One of them keeps following up in my inbox.",
+                    "I haven't answered. Probably. Don't read into it."],
+          "reply": "Yes, my inbox. Let's keep that between us.",
+          "wrongReply": "What? No. Forget I said anything." }
+      ]
+    },
+    {
+      "id": "victor", "name": "Victor", "role": "Producer", "isBoss": true, "color": "#8E6CD8",
+      "greeting": "Ah, the new tester! Walk with me. Metaphorically.",
+      "topics": [
+        { "icon": "money", "minDay": 1,
+          "lines": ["Every studio is a story about efficiency.",
+                    "Headcount is the most expensive line in my spreadsheet.",
+                    "If we could ship twice the games with half the payroll...",
+                    "Budgets, kid. It's always about the budget."],
+          "reply": "Ha! You'll go far. Further than some.",
+          "wrongReply": "Hm. You're not quite on my wavelength yet." },
+        { "icon": "robot", "minDay": 1,
+          "lines": ["The future of development is very exciting.",
+                    "Why hand-craft something a machine can do overnight?",
+                    "We've been piloting a new pipeline. Very hush-hush.",
+                    "Automation. Generation. Tools that never need a coffee break."],
+          "reply": "Exactly. Keep that open mind of yours.",
+          "wrongReply": "No, no. You've missed the point entirely." },
+        { "icon": "rival", "minDay": 2,
+          "lines": ["Did you see what happened across the street?",
+                    "Brightloop Studios announced their new title this morning.",
+                    "Same genre as ours. Same launch window.",
+                    "Our competition is going to eat us alive if we slip."],
+          "reply": "Brightloop. Of course you noticed. Sharp.",
+          "wrongReply": "That's not what I'm worried about right now." }
+      ]
+    },
+    {
+      "id": "priya", "name": "Priya", "role": "Studio Director", "isBoss": true, "color": "#2BB5B0",
+      "greeting": "Hello. I don't think we've properly met.",
+      "topics": [
+        { "icon": "games", "minDay": 1,
+          "lines": ["I started here to make things people would love.",
+                    "I still remember the first build I ever shipped.",
+                    "Lately it all feels like product, not play.",
+                    "I miss when this studio cared about making good games."],
+          "reply": "Yes. Games, not 'content'. Thank you.",
+          "wrongReply": "Hm. Maybe I'm not explaining myself well." },
+        { "icon": "bug", "minDay": 1,
+          "lines": ["Quality is a choice, you know.",
+                    "Every build tells you how much the team cared.",
+                    "The recent ones are... unusually broken.",
+                    "I read the bug reports. All of them. I notice things."],
+          "reply": "Good. Keep writing honest reports.",
+          "wrongReply": "That's not really it." },
+        { "icon": "family", "minDay": 2,
+          "lines": ["Long night yesterday.",
+                    "My daughter had her school play.",
+                    "I almost missed it for a board call.",
+                    "Some things matter more than a quarterly review."],
+          "reply": "She was a tree. The best tree.",
+          "wrongReply": "No, not that. Never mind." }
+      ]
+    },
+    {
+      "id": "rafi", "name": "Rafi", "role": "Senior Tester", "isBoss": false, "color": "#3FBF7F",
+      "greeting": "Hey, neighbour! Taking a break?",
+      "topics": [
+        { "icon": "coffee", "minDay": 1,
+          "lines": ["Ugh, today's one of those days.",
+                    "I need something to get me going before the next build drops.",
+                    "The machine in the break room has been broken since Monday.",
+                    "I'd do anything for a proper espresso right now."],
+          "reply": "Yes! Coffee run later? You're buying.",
+          "wrongReply": "Uh... no, I just need caffeine, mate." },
+        { "icon": "games", "minDay": 1,
+          "lines": ["Did you play anything good this weekend?",
+                    "I finally finished that indie thing everyone's talking about.",
+                    "Twelve hours. Not a single crash. Can you imagine?",
+                    "Playing a game I don't have to test is the dream."],
+          "reply": "Right? Proper games. Not whatever we get.",
+          "wrongReply": "Nah, not that. Different hobby, mate." },
+        { "icon": "bug", "minDay": 2,
+          "lines": ["Did you see what happened to the build server last night?",
+                    "Total meltdown. Everyone got paged.",
+                    "And the builds that came out after were even weirder.",
+                    "Some of these bugs don't look like anything a human would write."],
+          "reply": "Exactly. Something's off with these builds.",
+          "wrongReply": "No - I mean the build server thing." }
+      ]
+    },
+    {
+      "id": "mo", "name": "Mo", "role": "Gameplay Programmer", "isBoss": false, "color": "#F28C28",
+      "greeting": "If this is about a bug report, it's not my code.",
+      "topics": [
+        { "icon": "deadline", "minDay": 1,
+          "lines": ["I haven't slept properly in a week.",
+                    "Every time I fix something, the target moves.",
+                    "Victor keeps pulling the milestone forward.",
+                    "Crunch. It's crunch, and nobody will call it that."],
+          "reply": "Thanks. Nobody upstairs ever says it out loud.",
+          "wrongReply": "...That's not it. Forget it." },
+        { "icon": "robot", "minDay": 1,
+          "lines": ["Have you looked at the commit logs lately?",
+                    "Half the builds don't have a name on them.",
+                    "No author. Generated at 3 a.m. Every night.",
+                    "Somebody's using a generator to make builds, and it isn't us."],
+          "reply": "You've noticed too. Keep that quiet, okay?",
+          "wrongReply": "No. Look closer at the logs." },
+        { "icon": "rival", "minDay": 2,
+          "lines": ["Heard the news about Brightloop?",
+                    "They've been poaching people from here.",
+                    "A recruiter called me yesterday, actually.",
+                    "Honestly? I'm tempted to jump ship to the competition."],
+          "reply": "Yeah. Don't tell Victor I said that.",
+          "wrongReply": "No, the other thing." }
+      ]
+    },
+    {
+      "id": "jules", "name": "Jules", "role": "IT Support", "isBoss": false, "color": "#4F8EF7",
+      "greeting": "Have you tried turning yourself off and on again?",
+      "topics": [
+        { "icon": "email", "minDay": 1,
+          "lines": ["You would not believe what people send at work.",
+                    "I'm the one who has to fix the mail server, you know.",
+                    "Which means I see subject lines. Lots of subject lines.",
+                    "Everyone thinks their inbox is private. It isn't."],
+          "reply": "Ha. You get it. Knowledge is power, friend.",
+          "wrongReply": "Nope. Think nerdier." },
+        { "icon": "pet", "minDay": 1,
+          "lines": ["Someone at home is very mad at me today.",
+                    "I left before breakfast was served, apparently.",
+                    "Whiskers sat on my keyboard during a server restart.",
+                    "My cat runs this household, and I'm the IT guy."],
+          "reply": "Whiskers! Want to see 400 photos?",
+          "wrongReply": "What? No, I mean my cat." },
+        { "icon": "vacation", "minDay": 2,
+          "lines": ["Counting down the days.",
+                    "Two weeks, no laptop, no pager.",
+                    "Somewhere with a beach and terrible wifi.",
+                    "My holiday is the only thing keeping me going."],
+          "reply": "Yes! Beach. No tickets. Bliss.",
+          "wrongReply": "Not quite. Somewhere far away from here." }
+      ]
+    }
+  ],
+
+  "secrets": [
+    { "id": "dana_1", "about": "dana", "source": "rafi", "trustRequired": 3, "requires": [],
+      "title": "Dana pads the numbers",
+      "revealText": "Between us? Dana re-files our minor bugs as separate tickets so the team's count looks bigger for Victor.",
+      "useText": "I noticed some of our tickets look... duplicated. I'd be happy to keep the reports tidy for you.",
+      "useResponse": "...Let's not make a thing of it. I'll make sure your numbers look good too.",
+      "effect": "bonus", "performanceBonus": 0.05 },
+
+    { "id": "dana_2", "about": "dana", "source": "jules", "trustRequired": 4, "requires": ["dana_1"],
+      "title": "Dana is leaving",
+      "revealText": "Okay, you didn't hear this from me. Dana's been emailing Brightloop's recruiter. She's got an offer. She's leaving.",
+      "useText": "If you're moving on, someone will need to keep QA running. I'm ready.",
+      "useResponse": "Who told you that? ...Fine. I'll put in a word, if you keep it quiet.",
+      "effect": "bonus", "performanceBonus": 0.1 },
+
+    { "id": "victor_1", "about": "victor", "source": "jules", "trustRequired": 2, "requires": [],
+      "title": "Victor's 'test hardware'",
+      "revealText": "Fun fact: Victor expenses a new gaming console every month as 'test hardware'. None of them ever reach QA.",
+      "useText": "Any chance QA could borrow some of that new test hardware?",
+      "useResponse": "Ha... ha. Of course. I'll see what I can do. Let's keep procurement out of it.",
+      "effect": "bonus", "performanceBonus": 0.05 },
+
+    { "id": "victor_2", "about": "victor", "source": "mo", "trustRequired": 5, "requires": ["dana_2"],
+      "title": "Victor's generator plan",
+      "revealText": "I traced the nameless builds. Victor bought an AI generator. If QA keeps passing its builds, he'll replace the whole dev team. And with Dana gone, he needs a QA lead who plays along.",
+      "useText": "I know where the builds come from. And I know Dana's seat is about to open. You'll want someone in QA who understands the plan.",
+      "useResponse": "...You're sharper than your title. Congratulations, QA Tester 2. Let's talk about your new responsibilities.",
+      "effect": "promotion", "performanceBonus": 0.0 },
+
+    { "id": "priya_1", "about": "priya", "source": "mo", "trustRequired": 3, "requires": [],
+      "title": "Priya is fighting the board",
+      "revealText": "Priya's been arguing with the board about something Victor's pushing. She needs proof it's a bad idea before Friday.",
+      "useText": "I heard you need evidence before Friday. QA might be able to help.",
+      "useResponse": "Interesting. Come find me if you have something concrete.",
+      "effect": "bonus", "performanceBonus": 0.05 },
+
+    { "id": "priya_2", "about": "priya", "source": "rafi", "trustRequired": 6, "requires": ["priya_1"],
+      "title": "Priya reads every report",
+      "revealText": "Priya reads every single bug report herself. She's looking for a tester who logs what the generated builds actually do, honestly.",
+      "useText": "I've been documenting what the generated builds really do. Every bug, honestly. It's all in my reports.",
+      "useResponse": "I know. I've read them. I need people like you higher up. Congratulations - QA Tester 2.",
+      "effect": "promotion", "performanceBonus": 0.0 }
+  ],
+
+  "tasks": [
+    { "day": 1, "from": "dana",   "genre": "runner", "brief": "Your first build. Endless runner. Find what's broken, don't overthink it." },
+    { "day": 1, "from": "victor", "genre": "match3", "brief": "This puzzle build needs to go out soon. I'm sure it's fine. Confirm that." },
+    { "day": 2, "from": "dana",   "genre": "random", "brief": "Overnight build from the new pipeline. No idea what's in it. Go." },
+    { "day": 2, "from": "mo",     "genre": "runner", "brief": "Please just pass this one. I need a win this week." },
+    { "day": 3, "from": "victor", "genre": "random", "brief": "Marketing wants a trailer capture by tonight. Make sure nothing embarrassing happens on screen." },
+    { "day": 3, "from": "dana",   "genre": "match3", "brief": "Regression pass on the puzzle build. Same as before, hopefully fewer surprises." },
+    { "day": 4, "from": "mo",     "genre": "runner", "brief": "I rewrote the jump code. Again. Tell me it feels right." },
+    { "day": 4, "from": "priya",  "genre": "random", "brief": "I'd like an honest opinion on this one. Not the dashboard version." },
+    { "day": 5, "from": "dana",   "genre": "random", "brief": "Last build before reviews. No pressure. Some pressure." },
+    { "day": 5, "from": "victor", "genre": "match3", "brief": "This one is going to certification. Green it, please." }
+  ],
+
+  "chats": [
+    { "day": 1, "hour": 9, "minute": 20, "from": "dana",
+      "text": "Welcome aboard. Two builds on your plate today. Reports by 5.",
+      "replies": [
+        { "text": "On it!", "trust": 1, "score": 1.0, "response": "Good." },
+        { "text": "Only two?", "trust": 0, "score": 0.5, "response": "Don't jinx it." },
+        { "text": "Can I start tomorrow?", "trust": -1, "score": 0.0, "response": "No." }
+      ] },
+    { "day": 1, "hour": 11, "minute": 30, "from": "rafi",
+      "text": "lunch? the sandwich place does a QA discount if you complain enough",
+      "replies": [
+        { "text": "I'm in", "trust": 1, "score": 1.0, "response": "legend" },
+        { "text": "Busy, maybe tomorrow", "trust": 0, "score": 0.6, "response": "fair" },
+        { "text": "I don't eat lunch", "trust": -1, "score": 0.1, "response": "...concerning" }
+      ] },
+    { "day": 1, "hour": 14, "minute": 0, "from": "mo",
+      "text": "whoever filed 'game is bad' as a bug: please be specific",
+      "replies": [
+        { "text": "Wasn't me, but fair", "trust": 1, "score": 0.9, "response": "thank you" },
+        { "text": "The game IS bad though", "trust": -1, "score": 0.3, "response": "wow" },
+        { "text": "(react with a thumbs up)", "trust": 0, "score": 0.6, "response": "" }
+      ] },
+    { "day": 1, "hour": 15, "minute": 45, "from": "victor",
+      "text": "Team! Great energy today. Remember: green builds are happy builds.",
+      "replies": [
+        { "text": "Green builds!", "trust": 1, "score": 0.8, "response": "That's the spirit." },
+        { "text": "Only if they actually work", "trust": -1, "score": 0.6, "response": "Of course, of course." }
+      ] },
+    { "day": 2, "hour": 9, "minute": 40, "from": "jules",
+      "text": "build server died overnight. if your builds look extra cursed today, that's why",
+      "replies": [
+        { "text": "Thanks for the heads up", "trust": 1, "score": 1.0, "response": "np. i see everything" },
+        { "text": "What happened?", "trust": 1, "score": 0.8, "response": "can't say. ask me in person ;)" },
+        { "text": "Not my problem", "trust": -1, "score": 0.1, "response": "noted." }
+      ] },
+    { "day": 2, "hour": 12, "minute": 30, "from": "priya",
+      "text": "To the QA team: I read your reports. Keep them honest.",
+      "replies": [
+        { "text": "Always.", "trust": 1, "score": 1.0, "response": "Good." },
+        { "text": "Even the duplicates?", "trust": 0, "score": 0.5, "response": "Especially those." }
+      ] },
+    { "day": 2, "hour": 15, "minute": 0, "from": "mo",
+      "text": "hey if my build has a small bug or two... you could just ship it right?",
+      "replies": [
+        { "text": "I'll be fair", "trust": 0, "score": 0.9, "response": "...fair is fine. I guess." },
+        { "text": "Sure, I've got you", "trust": 2, "score": 0.4, "response": "you're the best" },
+        { "text": "Report it to Dana", "trust": -2, "score": 0.5, "response": "wow. okay." }
+      ] },
+    { "day": 3, "hour": 10, "minute": 15, "from": "rafi",
+      "text": "coffee machine is fixed. this is the best day of the quarter",
+      "replies": [
+        { "text": "Celebrate with me at 11?", "trust": 1, "score": 1.0, "response": "it's a date. a work date." },
+        { "text": "Finally", "trust": 0, "score": 0.6, "response": "FINALLY" }
+      ] },
+    { "day": 4, "hour": 13, "minute": 30, "from": "victor",
+      "text": "Quick poll: who here would be excited about faster, automated build pipelines?",
+      "replies": [
+        { "text": "Sounds exciting!", "trust": 1, "score": 0.6, "response": "That's what I like to hear." },
+        { "text": "Depends who it replaces", "trust": -1, "score": 0.8, "response": "Ha. Nobody, of course." }
+      ] },
+    { "day": 5, "hour": 9, "minute": 30, "from": "dana",
+      "text": "Reminder: performance reviews at 5. Make today count.",
+      "replies": [
+        { "text": "Will do", "trust": 1, "score": 1.0, "response": "Good." },
+        { "text": "Already?", "trust": 0, "score": 0.4, "response": "Already." }
+      ] }
+  ],
+
+  "meeting": {
+    "hostId": "dana",
+    "attendees": ["dana", "victor", "priya"],
+    "checkInOpening": "Quick check-in, nothing formal. Let's see how your first couple of days went.",
+    "checkInClosing": "Keep going. The real review is coming.",
+    "reviewOpening": "Thanks for coming. Victor and Priya are sitting in. Let's go through your numbers since the last review.",
+    "askForMore": "Before I give you my assessment - anything you'd like to raise?",
+    "tiers": [
+      { "minPercent": 0,  "name": "Terrible", "warning": true,
+        "line": "I'll be blunt: this is terrible. Your reports are unreliable and nobody here knows who you are. You need to do better, or you will be let go." },
+      { "minPercent": 21, "name": "Poor", "warning": false,
+        "line": "This isn't good enough. You're not in danger yet, but I know you can do better than this." },
+      { "minPercent": 51, "name": "Good", "warning": false,
+        "line": "Good work. Solid reports, and people like working with you. You're doing good - keep it up." },
+      { "minPercent": 71, "name": "Excellent", "warning": false,
+        "line": "Excellent work. Honestly, you're doing amazing. If this keeps up, you're in line for a promotion." }
+    ],
+    "promotedLine": "Victor clears his throat. \"And on that note - effective today, you're QA Tester 2.\" Same desk, same janky builds, but people listen when you talk now.",
+    "firedEnding": "I warned you last time. HR is waiting outside with a cardboard box. Your badge stops working at 5:30 PM.",
+    "unscriptedTaskBrief": "Fresh builds from the overnight pipeline. You know the drill."
+  }
+}
