@@ -4,6 +4,10 @@ namespace QAOffice
 {
     public static class SceneFlow
     {
-        public static void Restart() => SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex);
+        public static void Restart()
+        {
+            UnityEngine.Time.timeScale = 1;
+            SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex);
+        }
     }
 }

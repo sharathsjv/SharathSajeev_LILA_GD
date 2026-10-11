@@ -23,6 +23,10 @@ namespace QAOffice
         [SerializeField] ConversationView conversation;
         [SerializeField] NotebookView notebook;
         [SerializeField] ScreensView screens;
+        [SerializeField] LunchView lunch;
+        [SerializeField] PingPongView pingPong;
+        [SerializeField] MeetingView meeting;
+        [SerializeField] PauseView pause;
         [SerializeField] Image toastBox;
         [SerializeField] Text toastText;
 
@@ -31,8 +35,12 @@ namespace QAOffice
         public ConversationView Conversation => conversation;
         public NotebookView Notebook => notebook;
         public ScreensView Screens => screens;
+        public LunchView Lunch => lunch;
+        public PingPongView PingPong => pingPong;
+        public MeetingView Meeting => meeting;
+        public PauseView Pause => pause;
 
-        public bool Modal => computer.IsOpen || conversation.IsOpen || notebook.IsOpen || screens.IsOpen;
+        public bool Modal => computer.IsOpen || conversation.IsOpen || notebook.IsOpen || screens.IsOpen || lunch.IsOpen || pingPong.IsOpen || meeting.IsOpen || pause.IsOpen;
 
         readonly Queue<string> _toasts = new Queue<string>();
         float _toastTimer;
@@ -41,12 +49,14 @@ namespace QAOffice
         {
             var input = FindAnyObjectByType<UnityEngine.InputSystem.UI.InputSystemUIInputModule>();
             if (input != null && input.actionsAsset == null) input.AssignDefaultActions();
-            foreach (var v in new View[] { hud, computer, conversation, notebook, screens }) v.Init();
+            foreach (var v in new View[] { hud, computer, conversation, notebook, screens, lunch, pingPong, meeting, pause }) v.Init();
             hud.gameObject.SetActive(true);
             computer.gameObject.SetActive(false);
             conversation.gameObject.SetActive(false);
             notebook.gameObject.SetActive(false);
-            screens.gameObject.SetActive(false);
+            meeting.gameObject.SetActive(false);
+            pause.gameObject.SetActive(false);
+            screens.gameObject.SetActive(false); // lunch keeps itself active (its invite shows over the office)
             toastBox.gameObject.SetActive(false);
         }
 
@@ -55,6 +65,8 @@ namespace QAOffice
             computer.Close();
             conversation.Close();
             notebook.Close();
+            lunch.Close();
+            pingPong.Close();
         }
 
         public void Toast(string msg) => _toasts.Enqueue(msg);

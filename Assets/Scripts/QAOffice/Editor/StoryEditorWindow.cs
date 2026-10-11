@@ -12,16 +12,18 @@ namespace QAOffice.EditorTools
     {
         const string StoryPath = "Assets/Content/story.json";
 
-        static readonly string[] Tabs = { "Settings", "Characters", "Secrets", "Tasks", "Chats", "Reviews", "Icons" };
-        static readonly string[] Props = { "settings", "characters", "secrets", "tasks", "chats", "meeting", "icons" };
+        static readonly string[] Tabs = { "Settings", "Characters", "Secrets", "Tasks", "Chats", "Lunch", "Ping Pong", "Reviews", "Icons" };
+        static readonly string[] Props = { "settings", "characters", "secrets", "tasks", "chats", "lunchEvents", "pingPongComments", "meeting", "icons" };
         static readonly string[] Help =
         {
             "Timing, costs and scoring. Changes apply the next time you press Play.",
             "Everyone in the office. Each id must match the Character Id of an Actor in the Office scene. Topics are what the trust minigame is about: line 0 opens, each further line answers one 'Ask more'.",
             "Secrets are revealed by a source once trust is high enough and every required secret is known. Use 'promotion' on the last secret of each path.",
-            "Builds assigned per day. Days without tasks here get auto-assigned random builds (see Settings).",
+            "Builds assigned per day, and the time each one lands on the player's PC. Days without tasks here get auto-assigned random builds through the day (more as the weeks go on).",
             "Messages that arrive in the work chat at a set day and time. Each reply changes trust with the sender and the interaction score.",
-            "Check-in and review dialogue. A review picks the highest tier whose Min Percent is at or below the player's score.",
+            "Moments at the lunch table: a coworker asks to try your food or starts a conversation. Leave 'from' as (anyone) to let any coworker at the table say it. Skipping lunch makes conversation icons never fully settle for the rest of the day.",
+            "Things the player can shout at a coworkers' ping pong game (tap the game while it's on). {a} and {b} become the two players' names. Each player's skill, win/lose trust and invite lines live on their Character.",
+            "Check-ins and reviews, played out in the conference room with the host. A review picks the highest tier whose Min Percent is at or below the player's score; Reactions are lines other people at the table may add.",
             "Topic icons for the trust minigame: a shape, a colour and a label.",
         };
 
@@ -200,6 +202,8 @@ namespace QAOffice.EditorTools
             {
                 if (!charIds.Contains(t.from)) Err($"Task on Day {t.day}: 'from' character '{t.from}' doesn't exist.");
                 if (!genres.Contains(t.genre)) Err($"Task on Day {t.day}: unknown genre '{t.genre}'.");
+                if (d.settings != null && (t.hour < d.settings.dayStartHour || t.hour >= d.settings.dayEndHour))
+                    Warn($"Task on Day {t.day} at {t.hour:00}:{t.minute:00}: outside working hours, it'll never arrive.");
             }
             foreach (var c in d.chats ?? new ChatMessageData[0])
             {
@@ -208,6 +212,13 @@ namespace QAOffice.EditorTools
                 if (d.settings != null && (c.hour < d.settings.dayStartHour || c.hour >= d.settings.dayEndHour))
                     Warn($"Chat on Day {c.day} {c.hour:00}:{c.minute:00}: outside working hours, it'll never arrive.");
             }
+
+            foreach (var l in d.lunchEvents ?? new LunchEventData[0])
+            {
+                if (!string.IsNullOrEmpty(l.from) && !charIds.Contains(l.from)) Err($"Lunch '{Short(l.text)}': speaker '{l.from}' doesn't exist.");
+                if (l.replies == null || l.replies.Length == 0) Err($"Lunch '{Short(l.text)}': needs at least one reply.");
+            }
+            if ((d.lunchEvents ?? new LunchEventData[0]).Length == 0) Warn("Lunch: no lunch events, so lunch will be silent.");
 
             var m = d.meeting;
             if (m != null)
@@ -236,6 +247,8 @@ namespace QAOffice.EditorTools
                     Warn($"Scene Actor with Character Id '{id}' has no matching character here.");
             }
         }
+
+        static string Short(string s) => string.IsNullOrEmpty(s) ? "" : s.Length > 30 ? s.Substring(0, 30) + "..." : s;
 
         static bool DependsOn(string target, string current, SecretData[] all, HashSet<string> seen)
         {

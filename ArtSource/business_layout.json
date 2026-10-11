@@ -1,0 +1,31 @@
+{
+ "items": [
+  {"name": "Ground", "min": [-26.500,-0.100,-27.000], "max": [26.500,0.000,27.000], "pos": [0.000,-0.050,0.000], "fwd": [0.00,1.00], "usable": "", "modifier": false},
+  {"name": "Road", "min": [-3.000,0.000,-27.000], "max": [3.000,0.020,27.000], "pos": [0.000,0.010,0.000], "fwd": [0.00,1.00], "usable": "", "modifier": false},
+  {"name": "Road", "min": [-26.500,0.000,1.000], "max": [26.500,0.020,6.000], "pos": [0.000,0.010,3.500], "fwd": [0.00,1.00], "usable": "", "modifier": false},
+  {"name": "Road", "min": [3.000,0.000,-15.000], "max": [26.500,0.020,-10.000], "pos": [14.750,0.010,-12.500], "fwd": [0.00,1.00], "usable": "", "modifier": false},
+  {"name": "Sidewalk", "min": [-6.500,0.010,-27.000], "max": [-3.000,0.030,27.000], "pos": [-4.750,0.020,0.000], "fwd": [0.00,1.00], "usable": "", "modifier": false},
+  {"name": "Sidewalk", "min": [3.000,0.010,-27.000], "max": [6.500,0.030,27.000], "pos": [4.750,0.020,0.000], "fwd": [0.00,1.00], "usable": "", "modifier": false},
+  {"name": "Apartments", "min": [-18.500,0.000,12.000], "max": [-6.500,12.000,25.000], "pos": [-12.500,6.000,18.500], "fwd": [0.00,1.00], "usable": "", "modifier": true},
+  {"name": "Place business.apartments.door", "min": [-7.500,0.000,13.000], "max": [-7.500,0.000,13.000], "pos": [-7.500,0.000,13.000], "fwd": [1.00,0.00], "usable": "", "modifier": false},
+  {"name": "Tower 3", "min": [6.500,0.000,-9.000], "max": [15.500,18.000,0.000], "pos": [11.000,9.000,-4.500], "fwd": [0.00,1.00], "usable": "", "modifier": true},
+  {"name": "Tower 2", "min": [7.500,0.000,-27.000], "max": [19.500,16.000,-19.000], "pos": [13.500,8.000,-23.000], "fwd": [0.00,1.00], "usable": "", "modifier": true},
+  {"name": "Place business.subway", "min": [-4.000,0.000,-18.400], "max": [-4.000,0.000,-18.400], "pos": [-4.000,0.000,-18.400], "fwd": [0.00,-1.00], "usable": "", "modifier": false},
+  {"name": "Subway Entrance", "min": [-4.900,0.000,-17.500], "max": [-3.500,1.200,-16.100], "pos": [-4.200,0.600,-16.800], "fwd": [0.00,1.00], "usable": "subway:;", "modifier": false},
+  {"name": "Place business.taxi", "min": [5.500,0.000,-4.000], "max": [5.500,0.000,-4.000], "pos": [5.500,0.000,-4.000], "fwd": [-1.00,0.00], "usable": "", "modifier": false},
+  {"name": "Taxi Stand", "min": [6.025,0.000,-3.075], "max": [6.175,2.200,-2.925], "pos": [6.100,1.100,-3.000], "fwd": [0.00,1.00], "usable": "taxi:;", "modifier": false},
+  {"name": "Camera Home", "min": [0.000,0.000,0.000], "max": [0.000,0.000,0.000], "pos": [0.000,0.000,0.000], "fwd": [0.00,1.00], "usable": "", "modifier": false},
+  {"name": "Place business.coffeeshop.door.outside", "min": [-5.600,0.000,8.500], "max": [-5.600,0.000,8.500], "pos": [-5.600,0.000,8.500], "fwd": [1.00,0.00], "usable": "", "modifier": false},
+  {"name": "Coffee Shop", "min": [-18.500,0.000,6.500], "max": [-6.500,4.000,11.000], "pos": [-12.500,2.000,8.750], "fwd": [0.00,1.00], "usable": "", "modifier": true},
+  {"name": "Door (Coffee Shop)", "min": [-6.500,0.000,7.900], "max": [-6.380,2.100,9.100], "pos": [-6.440,1.050,8.500], "fwd": [-1.00,0.00], "usable": "enter:business.coffeeshop;", "modifier": true},
+  {"name": "Place business.mall.door.outside", "min": [5.600,0.000,9.000], "max": [5.600,0.000,9.000], "pos": [5.600,0.000,9.000], "fwd": [-1.00,0.00], "usable": "", "modifier": false},
+  {"name": "Mall", "min": [6.500,0.000,7.000], "max": [24.500,8.000,25.000], "pos": [15.500,4.000,16.000], "fwd": [0.00,1.00], "usable": "", "modifier": true},
+  {"name": "Door (Mall)", "min": [6.380,0.000,8.400], "max": [6.500,2.100,9.600], "pos": [6.440,1.050,9.000], "fwd": [1.00,0.00], "usable": "enter:business.mall;", "modifier": true},
+  {"name": "Place business.tower1.door.outside", "min": [-5.600,0.000,-6.000], "max": [-5.600,0.000,-6.000], "pos": [-5.600,0.000,-6.000], "fwd": [1.00,0.00], "usable": "", "modifier": false},
+  {"name": "Tower 1", "min": [-20.500,0.000,-14.000], "max": [-6.500,14.000,0.000], "pos": [-13.500,7.000,-7.000], "fwd": [0.00,1.00], "usable": "", "modifier": true},
+  {"name": "Door (Tower 1)", "min": [-6.500,0.000,-6.600], "max": [-6.380,2.100,-5.400], "pos": [-6.440,1.050,-6.000], "fwd": [-1.00,0.00], "usable": "enter:business.tower1;", "modifier": true},
+  {"name": "Place business.cornerbar.door.outside", "min": [-5.600,0.000,-20.000], "max": [-5.600,0.000,-20.000], "pos": [-5.600,0.000,-20.000], "fwd": [1.00,0.00], "usable": "", "modifier": false},
+  {"name": "Corner Bar", "min": [-18.500,0.000,-25.000], "max": [-6.500,4.000,-17.000], "pos": [-12.500,2.000,-21.000], "fwd": [0.00,1.00], "usable": "", "modifier": true},
+  {"name": "Door (Corner Bar)", "min": [-6.500,0.000,-20.600], "max": [-6.380,2.100,-19.400], "pos": [-6.440,1.050,-20.000], "fwd": [-1.00,0.00], "usable": "enter:business.cornerbar;", "modifier": true}
+ ]
+}

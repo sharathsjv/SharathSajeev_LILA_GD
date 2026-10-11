@@ -1,5 +1,7 @@
 using System;
+using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.AI;
 
 namespace QAOffice
 {
@@ -14,6 +16,8 @@ namespace QAOffice
         [SerializeField] float walkSpeed = 2.2f;
         [Tooltip("Chance, each idle check (every 8-16 s), to wander over to a coworker's desk.")]
         [SerializeField, Range(0, 1)] float wanderChance = 0.4f;
+        [Tooltip("Ground speed (units/s) at which the walk animation's feet don't slide; the walk plays faster or slower to match actual speed.")]
+        [SerializeField] float walkAnimSpeed = 1.55f;
 
         public string CharacterId => characterId;
         public CharacterData Data { get; private set; }
@@ -23,9 +27,11 @@ namespace QAOffice
         public bool Held { get; private set; }
 
         Vector3? _target;
+        readonly Queue<Vector3> _path = new Queue<Vector3>();
+        static NavMeshPath _navPath;
         Action _onArrive;
         Animator _animator;
-        bool _hasSpeedParam;
+        bool _hasSpeedParam, _hasWorkingParam, _hasWalkRateParam;
         float _idleTimer;
         bool _visiting;
         Office _office;
@@ -41,19 +47,58 @@ namespace QAOffice
 
             _animator = GetComponentInChildren<Animator>();
             if (_animator != null)
+            {
                 foreach (var p in _animator.parameters)
+                {
                     if (p.name == "Speed") _hasSpeedParam = true;
+                    if (p.name == "Working") _hasWorkingParam = true;
+                    if (p.name == "WalkRate") _hasWalkRateParam = true;
+                }
+                // A rigged model (e.g. Mixamo) is present: hide the placeholder capsule but keep its collider for taps.
+                var body = transform.Find("Body");
+                if (body != null)
+                    foreach (var r in body.GetComponentsInChildren<Renderer>()) r.enabled = false;
+            }
         }
 
+        // Walks around obstacles using the office NavMesh. Never cuts through walls: if the spot can't be
+        // reached, the character stops at the closest point the path gets to.
         public void WalkTo(Vector3 target, Action onArrive = null)
         {
-            _target = new Vector3(target.x, Home.y, target.z);
             _onArrive = onArrive;
+            _path.Clear();
+            _navPath ??= new NavMeshPath();
+            bool haveStart = NavMesh.SamplePosition(transform.position, out var from, 1.5f, NavMesh.AllAreas) ||
+                             NavMesh.SamplePosition(transform.position, out from, 4f, NavMesh.AllAreas);
+            if (haveStart && NavMesh.SamplePosition(target, out var to, 2f, NavMesh.AllAreas) &&
+                NavMesh.CalculatePath(from.position, to.position, NavMesh.AllAreas, _navPath) &&
+                _navPath.status != NavMeshPathStatus.PathInvalid)
+            {
+                foreach (var corner in _navPath.corners) _path.Enqueue(new Vector3(corner.x, Home.y, corner.z));
+                // Finish on the exact spot (e.g. their seat at a desk) only when the path really reaches it.
+                if (_navPath.status == NavMeshPathStatus.PathComplete && (to.position - target).sqrMagnitude < 1.0f * 1.0f)
+                    _path.Enqueue(new Vector3(target.x, Home.y, target.z));
+            }
+            else if (!haveStart)
+            {
+                // No walkable area anywhere near (e.g. no NavMesh at all): fall back to a straight line.
+                _path.Enqueue(new Vector3(target.x, Home.y, target.z));
+            }
+            if (_path.Count == 0)
+            {
+                _target = null;
+                var cb = _onArrive;
+                _onArrive = null;
+                cb?.Invoke();
+                return;
+            }
+            _target = _path.Dequeue();
         }
 
         public void Teleport(Vector3 pos)
         {
             _target = null;
+            _path.Clear();
             _onArrive = null;
             _visiting = false;
             transform.position = new Vector3(pos.x, Home.y, pos.z);
@@ -71,6 +116,7 @@ namespace QAOffice
             if (hold)
             {
                 _target = null;
+                _path.Clear();
                 _onArrive = null;
             }
             else if (!IsPlayer && (transform.position - Home).sqrMagnitude > 0.01f)
@@ -99,6 +145,12 @@ namespace QAOffice
                 transform.position = next;
                 if ((next - t).sqrMagnitude < 0.0004f)
                 {
+                    if (_path.Count > 0)
+                    {
+                        _target = _path.Dequeue();
+                        if (_hasSpeedParam) _animator.SetFloat("Speed", moved);
+                        return;
+                    }
                     _target = null;
                     var cb = _onArrive;
                     _onArrive = null;
@@ -106,10 +158,16 @@ namespace QAOffice
                 }
             }
             if (_hasSpeedParam) _animator.SetFloat("Speed", moved);
+            if (_hasWalkRateParam && moved > 0.1f) _animator.SetFloat("WalkRate", Mathf.Clamp(moved / walkAnimSpeed, 0.5f, 3f));
+            if (_hasWorkingParam) _animator.SetBool("Working", IsWorking());
 
             if (IsPlayer || Data == null || Held || _target != null || GameManager.I == null || !GameManager.I.ClockRunning) return;
             Wander();
         }
+
+        // Sitting at their own desk with nothing else going on: everyone (player included) types away.
+        bool IsWorking() =>
+            _target == null && !Held && (transform.position - Home).sqrMagnitude <= 0.04f;
 
         // Set dressing: wander over to a coworker's desk, chat for a bit, come back.
         void Wander()

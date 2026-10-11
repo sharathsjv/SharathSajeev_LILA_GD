@@ -26,12 +26,16 @@ namespace QAOffice
             var actor = hit.collider.GetComponentInParent<Actor>();
             if (actor != null)
             {
-                if (!actor.IsPlayer) office.Approach(actor);
+                if (actor.IsPlayer) return;
+                var table = office.PingPong;
+                if (table != null && table.IsNpcMatch && (actor == table.NpcA || actor == table.NpcB)) gm.UI.PingPong.ShowComments();
+                else office.Approach(actor);
                 return;
             }
             var it = hit.collider.GetComponentInParent<Interactable>();
             if (it == null) return;
             if (it.kind == Interactable.Kind.PlayerDesk) office.GoToDesk();
+            else if (it.kind == Interactable.Kind.PingPongTable) office.GoToPingPongTable();
             else office.WalkPlayer(hit.point);
         }
 

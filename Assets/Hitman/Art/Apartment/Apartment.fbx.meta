@@ -1,0 +1,291 @@
+fileFormatVersion: 2
+guid: 200f75e3332dcb640a38913d05809c7a
+ModelImporter:
+  serializedVersion: 24600
+  internalIDToNameTable: []
+  externalObjects:
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: M_Apt_BathTile
+    second: {fileID: 2100000, guid: 201bd9b4818aa97bea03089b9ead44ee, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: M_Apt_Books
+    second: {fileID: 2100000, guid: fa1c706a223bf1a76abb7b3186174d7f, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: M_Apt_Brick
+    second: {fileID: 2100000, guid: 749dadec0011e321a8a176982c3ff98e, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: M_Apt_Cabinet
+    second: {fileID: 2100000, guid: 0ae8b248a3cfdacab9db0c6f1bb4e9b4, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: M_Apt_Cardboard
+    second: {fileID: 2100000, guid: 2679f22ac4b753b129c7e0e583daf6cc, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: M_Apt_Carpet
+    second: {fileID: 2100000, guid: f1ebe9c7f05f01e9284a678690048673, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: M_Apt_Ceramic
+    second: {fileID: 2100000, guid: d6ed1bb897d57268aacf2bdbaec24c6e, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: M_Apt_Cloth
+    second: {fileID: 2100000, guid: 983932c6a9da1e623b14ac856f31f5d9, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: M_Apt_Couch
+    second: {fileID: 2100000, guid: e245674655e9a3cce9b5b0c9b0875245, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: M_Apt_DarkWood
+    second: {fileID: 2100000, guid: dbadb9ad498e041d6bb96beef72ba9a2, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: M_Apt_Door
+    second: {fileID: 2100000, guid: c72fcae2178106b6f85236bdf7b2db1f, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: M_Apt_Fabric
+    second: {fileID: 2100000, guid: 758fca9ad0f2b23f7bbbe78e209875b5, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: M_Apt_Formica
+    second: {fileID: 2100000, guid: cef369240678d30eea14adf725db9c5e, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: M_Apt_GlassBrown
+    second: {fileID: 2100000, guid: 51801694ab875e351ac989222e319a07, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: M_Apt_GlassGreen
+    second: {fileID: 2100000, guid: 21519ed3abf52c97ea516c9f681ff5d8, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: M_Apt_KitchenTile
+    second: {fileID: 2100000, guid: ac45192c0f0a1f9cd83385ea1ec713b6, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: M_Apt_Linoleum
+    second: {fileID: 2100000, guid: 99b156ad46795ca5f9179c7cd4ffbb5c, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: M_Apt_MetalDark
+    second: {fileID: 2100000, guid: 95136cafafc60b2d49793044f341d52a, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: M_Apt_MetalWhite
+    second: {fileID: 2100000, guid: 9158b6563ad58563ea87b3b983c5ff7a, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: M_Apt_Mirror
+    second: {fileID: 2100000, guid: 53ece7e4b0e27b01dbe9f89ce275a63d, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: M_Apt_PaintBlue
+    second: {fileID: 2100000, guid: 7108da0fa56fe9782b5768606dd1b07d, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: M_Apt_PaintCream
+    second: {fileID: 2100000, guid: 0f1c48979e32c1df08f1ca28c80b501b, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: M_Apt_Paper
+    second: {fileID: 2100000, guid: a4ebbe990aca49fc383a360b816eab65, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: M_Apt_Plaster
+    second: {fileID: 2100000, guid: b1cc17f2a7051147294de4345c143c34, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: M_Apt_Plastic
+    second: {fileID: 2100000, guid: 4651b78ff1c6cb949a2beadcaa2745d1, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: M_Apt_PosterJazz
+    second: {fileID: 2100000, guid: c1f9d750b8ac24f7ba6a0bb12698236c, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: M_Apt_PosterNoir
+    second: {fileID: 2100000, guid: 190b7fc1b06e0ea20ad3d145bd806211, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: M_Apt_Rug
+    second: {fileID: 2100000, guid: 37b60d3fdd68cbae180cb8e65301eac4, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: M_Apt_Screen
+    second: {fileID: 2100000, guid: b31ee59ac6fadd592a0762c54921cefb, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: M_Apt_Sheets
+    second: {fileID: 2100000, guid: dc276e3ecf7da6430b1e7f0a6ed1f042, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: M_Apt_Trash
+    second: {fileID: 2100000, guid: e9505c4d064df2bcaabf3cebcbd3a9c8, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: M_Apt_Wallpaper
+    second: {fileID: 2100000, guid: 0528887635ebcf4eab0ba39367548c90, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: M_Apt_WallpaperBlue
+    second: {fileID: 2100000, guid: 8dfaa9607ee3202b49cb7651be6ae29e, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: M_Apt_Window
+    second: {fileID: 2100000, guid: 498394322f6735cb3b21a0dfeb57c6b2, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: M_Apt_WoodFloor
+    second: {fileID: 2100000, guid: 42e9ba91d68fec179bdb55a26fd6aec2, type: 2}
+  materials:
+    materialImportMode: 2
+    materialName: 0
+    materialSearch: 1
+    materialLocation: 1
+    searchTexturesGlobally: 0
+  animations:
+    legacyGenerateAnimations: 4
+    bakeSimulation: 0
+    resampleCurves: 1
+    optimizeGameObjects: 0
+    removeConstantScaleCurves: 0
+    motionNodeName: 
+    animationImportErrors: 
+    animationImportWarnings: 
+    animationRetargetingWarnings: 
+    animationDoRetargetingWarnings: 0
+    importAnimatedCustomProperties: 0
+    importConstraints: 0
+    animationCompression: 1
+    animationRotationError: 0.5
+    animationPositionError: 0.5
+    animationScaleError: 0.5
+    animationWrapMode: 0
+    extraExposedTransformPaths: []
+    extraUserProperties: []
+    clipAnimations: []
+    isReadable: 1
+  meshes:
+    lODScreenPercentages: []
+    globalScale: 1
+    meshCompression: 0
+    addColliders: 1
+    useSRGBMaterialColor: 1
+    sortHierarchyByName: 1
+    preBakeConvexCollisionMesh: 0
+    preBakeTriangleCollisionMesh: 0
+    importPhysicalCameras: 1
+    importVisibility: 1
+    importBlendShapes: 0
+    importCameras: 0
+    importLights: 0
+    nodeNameCollisionStrategy: 1
+    fileIdsGeneration: 2
+    swapUVChannels: 0
+    generateSecondaryUV: 1
+    useFileUnits: 1
+    keepQuads: 0
+    weldVertices: 1
+    bakeAxisConversion: 1
+    preserveHierarchy: 0
+    skinWeightsMode: 0
+    maxBonesPerVertex: 4
+    minBoneWeight: 0.001
+    optimizeBones: 1
+    generateMeshLods: 0
+    meshLodGenerationFlags: 0
+    maximumMeshLod: -1
+    importUVs: -1
+    importVertexColors: 1
+    meshOptimizationFlags: -1
+    indexFormat: 0
+    secondaryUVAngleDistortion: 8
+    secondaryUVAreaDistortion: 15.000001
+    secondaryUVHardAngle: 88
+    secondaryUVMarginMethod: 1
+    secondaryUVMinLightmapResolution: 40
+    secondaryUVMinObjectScale: 1
+    secondaryUVPackMargin: 8
+    useFileScale: 1
+    strictVertexDataChecks: 0
+  tangentSpace:
+    normalSmoothAngle: 60
+    normalImportMode: 0
+    tangentImportMode: 3
+    normalCalculationMode: 4
+    legacyComputeAllNormalsFromSmoothingGroupsWhenMeshHasBlendShapes: 0
+    blendShapeNormalImportMode: 1
+    normalSmoothingSource: 0
+    calculateBlendshapeNormalsDeltaFromImportedNormals: 0
+  referencedClips: []
+  importAnimation: 0
+  humanDescription:
+    serializedVersion: 3
+    human: []
+    skeleton: []
+    armTwist: 0.5
+    foreArmTwist: 0.5
+    upperLegTwist: 0.5
+    legTwist: 0.5
+    armStretch: 0.05
+    legStretch: 0.05
+    feetSpacing: 0
+    globalScale: 1
+    rootMotionBoneName: 
+    hasTranslationDoF: 0
+    hasExtraRoot: 0
+    skeletonHasParents: 1
+  lastHumanDescriptionAvatarSource: {instanceID: 0}
+  autoGenerateAvatarMappingIfUnspecified: 1
+  animationType: 0
+  humanoidOversampling: 1
+  avatarSetup: 0
+  addHumanoidExtraRootOnlyWhenUsingAvatar: 1
+  importBlendShapeDeformPercent: 1
+  remapMaterialsIfMaterialImportModeIsNone: 0
+  additionalBone: 0
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 

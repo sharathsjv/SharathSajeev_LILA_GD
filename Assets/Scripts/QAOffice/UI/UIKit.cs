@@ -91,7 +91,19 @@ namespace QAOffice
             t.raycastTarget = false;
             t.horizontalOverflow = HorizontalWrapMode.Wrap;
             t.verticalOverflow = VerticalWrapMode.Overflow;
+            AddOutline(t);
             return t;
+        }
+
+        // Contrasting outline so text reads over any background: dark around light text, light around dark text.
+        public static Outline AddOutline(Text t)
+        {
+            if (!t.TryGetComponent<Outline>(out var o)) o = t.gameObject.AddComponent<Outline>();
+            var c = t.color;
+            float luminance = 0.299f * c.r + 0.587f * c.g + 0.114f * c.b;
+            o.effectColor = luminance > 0.5f ? new Color(0, 0, 0, 0.85f) : new Color(1, 1, 1, 0.6f);
+            o.effectDistance = luminance > 0.5f ? new Vector2(2f, -2f) : new Vector2(1.5f, -1.5f);
+            return o;
         }
 
         public static Button Button(Transform parent, string label, Color color, Action onClick, int fontSize = 30)

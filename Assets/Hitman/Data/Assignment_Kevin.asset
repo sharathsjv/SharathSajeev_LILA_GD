@@ -1,0 +1,23 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a7424a433be012d37b0f88ce8c035217, type: 3}
+  m_Name: Assignment_Kevin
+  m_EditorClassIdentifier: Assembly-CSharp::Hitman.Assignment
+  sender: Anonymous
+  subject: A job
+  body: I've heard you "dispose" of people for a living and you make it look like an accident. I have a job for you.
+  target: {fileID: 11400000, guid: b5c0de28464ee8e1cb024091e09fc795, type: 2}
+  startingNotes: '- Go to Business District.
+
+    - Find info about Kevin Malone.
+
+'

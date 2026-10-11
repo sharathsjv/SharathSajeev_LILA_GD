@@ -16,6 +16,8 @@ namespace QAOffice
         public SecretData[] secrets;
         public TaskData[] tasks;
         public ChatMessageData[] chats;
+        public LunchEventData[] lunchEvents;
+        public PingPongComment[] pingPongComments;
         public MeetingData meeting;
     }
 
@@ -47,6 +49,33 @@ namespace QAOffice
         public int maxTrust;
         [Tooltip("Icon flicker interval with no asks; it slows with each ask.")]
         public float iconCycleSeconds;
+        [Tooltip("Real seconds the player has to pick an orbiting icon; restarts after each new clue. Running out counts as a wrong answer.")]
+        public float guessSeconds;
+
+        [Header("Lunch")]
+        [Tooltip("Hour lunch starts (e.g. 12).")]
+        public int lunchHour;
+        [Tooltip("How long the lunch window lasts, in in-game minutes. Not eating by the end of it counts as skipping.")]
+        public int lunchMinutes;
+        [Tooltip("How many coworkers sit with you.")]
+        public int lunchCompanions;
+        [Tooltip("How many lunch moments (food requests, conversations) happen per lunch.")]
+        public int lunchEventsPerLunch;
+
+        [Header("Ping pong")]
+        public int pingPongPointsToWin;
+        [Tooltip("In-game minutes a match takes.")]
+        public int pingPongMinutes;
+        [Tooltip("Ball speed across the table (table lengths per second, roughly).")]
+        public float pingPongBallSpeed;
+        [Tooltip("In-game minutes between checks for a coworker inviting the player.")]
+        public int pingPongInviteEveryMinutes;
+        [Tooltip("In-game minutes between checks for two coworkers starting a game of their own (set dressing).")]
+        public int pingPongNpcMatchEveryMinutes;
+        [Tooltip("Chance a check actually starts a coworker match.")]
+        [Range(0, 1)] public float pingPongNpcMatchChance;
+        [Tooltip("Real seconds a coworker match lasts.")]
+        public float pingPongNpcMatchSeconds;
 
         [Header("QA")]
         [Tooltip("Real seconds the player gets with each build.")]
@@ -79,7 +108,28 @@ namespace QAOffice
         public bool isBoss;
         [StoryRef(StoryRefKind.Color)] public string color;
         [TextArea(1, 3)] public string greeting;
+        [Tooltip("Lines said the first time the player talks to this person, before the usual minigame.")]
+        [TextArea(1, 3)] public string[] introduction;
         public TopicData[] topics;
+        public PingPongProfile pingPong;
+    }
+
+    [Serializable]
+    public class PingPongProfile
+    {
+        [Tooltip("0 = hopeless, 1 = returns almost everything.")]
+        [Range(0, 1)] public float skill;
+        [Tooltip("Trust change when the PLAYER wins. Competitive people may dislike losing (negative).")]
+        public int winTrust;
+        [Tooltip("Trust change when the PLAYER loses.")]
+        public int loseTrust;
+        [Tooltip("Chance this person invites the player when an invite check happens (once per day at most).")]
+        [Range(0, 1)] public float inviteChance;
+        [TextArea(1, 2)] public string inviteLine;
+        [Tooltip("Said when the player wins.")]
+        [TextArea(1, 2)] public string playerWinsLine;
+        [Tooltip("Said when the player loses.")]
+        [TextArea(1, 2)] public string playerLosesLine;
     }
 
     [Serializable]
@@ -126,6 +176,9 @@ namespace QAOffice
     {
         [TextArea(1, 3)] public string brief;
         public int day;
+        [Tooltip("When the build lands on the player's PC that day.")]
+        public int hour;
+        public int minute;
         [Tooltip("Who assigns it.")]
         [StoryRef(StoryRefKind.Character)] public string from;
         [StoryRef(StoryRefKind.Genre)] public string genre;
@@ -152,6 +205,18 @@ namespace QAOffice
         [Range(0, 1)] public float score;
         [Tooltip("Sender's follow-up (optional).")]
         public string response;
+    }
+
+    [Serializable]
+    public class LunchEventData
+    {
+        [TextArea(1, 3)] public string text;
+        [Tooltip("Who says it. Leave empty for 'any coworker at the table'. Only used if that person is at the table.")]
+        [StoryRef(StoryRefKind.CharacterOrAny)] public string from;
+        [Tooltip("Only happens from this day on.")]
+        public int minDay;
+        [Tooltip("How the player can respond. Trust applies to the speaker; score feeds the interaction score.")]
+        public ChatReplyData[] replies;
     }
 
     [Serializable]
@@ -184,9 +249,24 @@ namespace QAOffice
         [TextArea(2, 4)] public string line;
         [Tooltip("Landing in a warning tier twice in a row gets the player fired.")]
         public bool warning;
+        [Tooltip("Lines other people at the table might add after the host's verdict (one is picked at random).")]
+        [TextArea(1, 2)] public string[] reactions;
     }
 
-    public enum StoryRefKind { Character, Boss, Icon, Secret, Genre, Effect, Shape, Color }
+    [Serializable]
+    public class PingPongComment
+    {
+        [Tooltip("Shout from the sidelines at a coworkers' match. {a} and {b} are replaced with the two players' names.")]
+        public string text;
+        [Tooltip("Trust change with the first player ({a}).")]
+        public int trustA;
+        [Tooltip("Trust change with the second player ({b}).")]
+        public int trustB;
+        [Tooltip("What one of them says back.")]
+        public string response;
+    }
+
+    public enum StoryRefKind { Character, CharacterOrAny, Boss, Icon, Secret, Genre, Effect, Shape, Color }
 
     // Draws a string field as a dropdown of valid ids (or a colour picker) in the Story Editor / Inspector.
     public class StoryRefAttribute : PropertyAttribute

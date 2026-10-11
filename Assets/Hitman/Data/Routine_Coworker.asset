@@ -1,0 +1,49 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 522c4969fe6b3dd4a86edb902e404ef4, type: 3}
+  m_Name: Routine_Coworker
+  m_EditorClassIdentifier: Assembly-CSharp::Hitman.Routine
+  displayName: Oscar
+  info: Kevin's coworker. Doesn't drink.
+  address: Apartments, Business District
+  phone: 555-0187
+  steps:
+  - time: 09:20
+    place: business.tower1.desk.coworker
+    activity: 2
+    options: []
+    note: 
+  - time: 11:28
+    place: business.tower1.desk.kevin.side
+    activity: 0
+    options: []
+    note: Wakes Kevin up.
+  - time: 11:35
+    place: business.tower1.desk.coworker
+    activity: 2
+    options: []
+    note: 
+  - time: 13:00
+    place: business.cornerbar.stool2
+    activity: 1
+    options: []
+    note: Lunch with Kevin (doesn't drink).
+  - time: 14:00
+    place: business.tower1.desk.coworker
+    activity: 2
+    options: []
+    note: 
+  - time: 17:00
+    place: business.apartments.door
+    activity: 7
+    options: []
+    note: Home.

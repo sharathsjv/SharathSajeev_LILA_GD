@@ -37,7 +37,7 @@ namespace QAOffice.EditorTools
                     string current = property.stringValue ?? "";
                     var list = options.ToList();
                     int index = list.IndexOf(current);
-                    var display = list.Select(o => new GUIContent(o)).ToList();
+                    var display = list.Select(o => new GUIContent(o == "" ? "(anyone)" : o)).ToList();
                     if (index < 0)
                     {
                         display.Insert(0, new GUIContent(string.IsNullOrEmpty(current) ? "(choose...)" : $"{current}  (missing!)"));
@@ -64,6 +64,7 @@ namespace QAOffice.EditorTools
             switch (kind)
             {
                 case StoryRefKind.Character: return d.characters?.Select(c => c.id).ToArray();
+                case StoryRefKind.CharacterOrAny: return d.characters == null ? null : new[] { "" }.Concat(d.characters.Select(c => c.id)).ToArray();
                 case StoryRefKind.Boss: return d.characters?.Where(c => c.isBoss).Select(c => c.id).ToArray();
                 case StoryRefKind.Icon: return d.icons?.Select(i => i.id).ToArray();
                 case StoryRefKind.Secret: return d.secrets?.Select(s => s.id).ToArray();

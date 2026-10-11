@@ -1,0 +1,85 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 522c4969fe6b3dd4a86edb902e404ef4, type: 3}
+  m_Name: Routine_Kevin
+  m_EditorClassIdentifier: Assembly-CSharp::Hitman.Routine
+  displayName: Kevin Malone
+  photo: {fileID: 1993710755605868245, guid: b709f039fb8b8460aa86d1aa29a00a85, type: 3}
+  info: Works as an accountant in the business district.
+  address: 404, Suburbs, Kensington
+  phone: 555-0144
+  steps:
+  - time: 08:45
+    place: suburbs.house4.shower
+    activity: 7
+    options: []
+    note: Wakes up and showers.
+  - time: 09:00
+    place: business.cornerbar.stool1
+    activity: 3
+    options: []
+    note: Subway to work; beer and breakfast at the corner bar, then a second beer.
+  - time: 09:42
+    place: business.tower1.desk.kevin
+    activity: 2
+    options: []
+    note: Leaves the bar so he's at his desk in Tower 1 before 10.
+  - time: 11:00
+    place: business.tower1.desk.kevin
+    activity: 6
+    options: []
+    note: Passes out at work.
+  - time: 11:30
+    place: business.tower1.desk.kevin
+    activity: 2
+    options: []
+    note: Woken up by his coworker.
+  - time: 13:00
+    place: business.cornerbar.stool1
+    activity: 3
+    options: []
+    note: 'Lunch at the corner bar with his coworker: 4 beers.'
+  - time: 14:00
+    place: business.tower1.desk.kevin
+    activity: 2
+    options: []
+    note: Back to work.
+  - time: 17:00
+    place: 
+    activity: 0
+    options:
+    - weight: 1
+      place: business.cornerbar.stool1
+      activity: 3
+    - weight: 1
+      place: business.mall.inside
+      activity: 0
+    - weight: 1
+      place: suburbs.shops.groceries
+      activity: 0
+    note: Drinking, the mall, or groceries near the Suburbs subway.
+  - time: 19:00
+    place: suburbs.house4.couch
+    activity: 1
+    options: []
+    note: 'Home: takeout on the couch, keeps drinking.'
+  - time: 22:30
+    place: 
+    activity: 0
+    options:
+    - weight: 3
+      place: suburbs.house4.couch
+      activity: 6
+    - weight: 1
+      place: suburbs.house4.bed
+      activity: 6
+    note: 'Passes out: 75% couch, 25% bed.'
