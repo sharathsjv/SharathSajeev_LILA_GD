@@ -32,6 +32,10 @@ namespace Hitman
         [SerializeField] protected float streetHalfWidth = 7f;
         [Tooltip("How strongly the blue noir grade applies here (1 = full, for grim areas; lower for the cleaner districts).")]
         [SerializeField, Range(0, 1)] protected float noirStrength = 1f;
+        [Tooltip("At night: multiplies the sky/ambient light here (1 = as the day/night keys say).")]
+        [SerializeField, Range(0.5f, 4)] protected float nightSky = 1f;
+        [Tooltip("At night: multiplies the street lamps, neon and lit windows here.")]
+        [SerializeField, Range(0.5f, 3)] protected float nightLamps = 1f;
         [Tooltip("Keep the camera on Camera Home (the middle of the room) instead of following the player, so the " +
                  "whole floor stays in view.")]
         [SerializeField] protected bool fixedCamera;
@@ -47,6 +51,8 @@ namespace Hitman
         public float StreetCenterX => streetCenterX;
         public float StreetHalfWidth => streetHalfWidth;
         public float NoirStrength => noirStrength;
+        public float NightSky => nightSky;
+        public float NightLamps => nightLamps;
         public bool FixedCamera => fixedCamera && cameraHome != null;
 
         // ---------- street cutaway ----------

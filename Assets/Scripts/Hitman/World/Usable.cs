@@ -21,7 +21,7 @@ namespace Hitman
     public class UseAction
     {
         public string label;
-        [Tooltip("laptop, eat, sleep, subway, taxi, notepad, or a custom id handled by the game.")]
+        [Tooltip("laptop, eat, sleep, subway, taxi, notepad, wardrobe, or a custom id handled by the game.")]
         public string id;
         [Tooltip("Extra data for the action, e.g. the food name for 'eat'.")]
         public string arg;

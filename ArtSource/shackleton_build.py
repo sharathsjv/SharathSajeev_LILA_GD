@@ -14,8 +14,8 @@
 import sys, json, math, importlib
 HERE = "/mnt/13e3623f-9e8e-462a-93b0-a94e3f20b9b1/GitStuff/SharathSajeev_LILA_GD_Test/ArtSource"
 sys.path.insert(0, HERE)
-import apt_textures, street_textures, street_kit
-for m in (apt_textures, street_textures, street_kit): importlib.reload(m)
+import apt_textures, street_textures, street_kit, shop_textures
+for m in (apt_textures, street_textures, street_kit, shop_textures): importlib.reload(m)
 from street_kit import *
 
 reset(11)
@@ -140,23 +140,29 @@ single("Station_Sign", (5.92, 6.02, -0.3, -0.2, 0, 2.4, "Steel"), (5.87, 5.92, -
 
 # ---------------------------------------------------------------- buildings (footprints from the game)
 
-home_door = LAYOUT["Door (Apartment 1 (Home))"]["pos"][2]
+# 2026-10-11 doc map: the east side is now Supermarket (Shop n Save) / Barber / Cafe, and home is Apartment 2 (west).
+home_door = LAYOUT["Door (Home)"]["pos"][2]
+barber_door = LAYOUT["Door (Barber Shop)"]["pos"][2]
+super_door = LAYOUT["Door (Supermarket)"]["pos"][2]
 bar_door = LAYOUT["Door (Bar)"]["pos"][2]
 cafe_door = LAYOUT["Door (Cafe)"]["pos"][2]
-building("Apartment1", LAYOUT["Apartment 1 (Home)"], 4, "BrickRed", -1, fire_escape=True, door=home_door,
-         roof=[(15.5, 5.5, "chimney"), (12.0, 9.5, "ac")])
-building("Apartment2", LAYOUT["Apartment 2"], 4, "BrickBrown", +1, fire_escape=True,
-         shop={"sign": "SignPawn", "glass": "Shutter"}, roof=[(-14.0, 8.5, "tank"), (-10.0, 12.5, "chimney")])
+building("BarberShop", LAYOUT["Barber Shop"], 3, "BrickRed", -1, shop={"sign": "SignBarber", "glass": "Shopfront"},
+         door=barber_door, roof=[(15.5, 5.5, "chimney"), (12.0, 9.5, "ac")])
+building("Apartment2", LAYOUT["Apartment 2"], 4, "BrickBrown", +1, fire_escape=True, door=home_door,
+         roof=[(-14.0, 8.5, "tank"), (-10.0, 12.5, "chimney")])
 building("Restaurant", LAYOUT["Restaurant"], 2, "Stucco", +1, shop={"sign": "SignDiner", "awning": "AwningRed"},
          roof=[(-13.0, 19.0, "ac")])
-building("Groceries", LAYOUT["Groceries"], 2, "BrickRed", -1, shop={"sign": "SignGroceries", "awning": "Awning"})
+building("Supermarket", LAYOUT["Supermarket"], 2, "BrickRed", -1, shop={"sign": "SignShopNSave", "awning": "AwningRed"},
+         door=super_door)
 building("Bar", LAYOUT["Bar"], 2, "BrickBrown", +1, shop={"sign": "SignBar", "glass": "WinDark"}, door=bar_door)
 building("Cafe", LAYOUT["Cafe"], 2, "Stucco", -1, shop={"sign": "SignCafe", "awning": "Awning"}, door=cafe_door)
 building("GenericW", LAYOUT["Generic Building W"], 3, "Stucco", +1, shop={"sign": "SignLiquor", "glass": "Shutter"},
          roof=[(-15.0, -20.0, "ac"), (-11.0, -14.0, "chimney")])
 building("GenericE", LAYOUT["Generic Building E"], 3, "BrickBrown", -1, roof=[(14.0, -16.0, "tank")])
 
-door_obj("Home", 7.5, -1, home_door)
+door_obj("Home", -7.5, +1, home_door)
+door_obj("Barber", 7.5, -1, barber_door)
+door_obj("Supermarket", 7.5, -1, super_door)
 door_obj("Bar", -7.5, +1, bar_door, kind="Boarded")
 door_obj("Cafe", 7.5, -1, cafe_door)
 
@@ -220,6 +226,18 @@ for i, y in enumerate((1.3, 1.85)):
     B.box(-7.35, -6.85, y - 0.22, y + 0.22, 0.3, 1.05, "Dumpster" if i else "Payphone")
     B.box(-7.3, -6.9, y - 0.18, y + 0.18, 0, 0.3, "Steel")
     B.done()
+
+# the newspaper machine outside the Shop n Save (buy the paper here)
+B = Builder("Newsbox_Paper", (7.0, 19.9, 0))
+B.box(6.75, 7.25, 19.65, 20.15, 0.3, 1.1, "Payphone").box(6.8, 7.2, 19.7, 20.1, 0, 0.3, "Steel")
+B.box(6.73, 6.75, 19.68, 20.12, 0.75, 1.05, "SignNews")
+B.done()
+# a bench by the subway entrance (loitering), and a second payphone on the east side
+bench("Bench_Subway", 7.05, -1.9, along_y=True)
+pp = Builder("Payphone_2", (7.2, -6.2 + 3.0, 0))
+pp.box(7.05, 7.45, -3.5, -2.9, 0.6, 2.0, "Payphone").box(7.3, 7.45, -3.55, -2.85, 0, 2.2, "Steel")
+pp.box(6.9, 7.5, -3.6, -2.8, 2.2, 2.3, "Steel")
+pp.done()
 
 crates = Builder("Prop_Crates")
 for k in range(4):

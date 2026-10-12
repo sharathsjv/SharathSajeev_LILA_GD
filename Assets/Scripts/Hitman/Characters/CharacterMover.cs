@@ -15,6 +15,19 @@ namespace Hitman
 
         public bool Moving => _target != null;
         public bool Seated { get; set; }
+        // Moves and animates in real time even while the world is in slow motion (the player's last-chance blend-in).
+        public bool Unscaled
+        {
+            get => _unscaled;
+            set
+            {
+                _unscaled = value;
+                if (_animator != null) _animator.updateMode = value ? AnimatorUpdateMode.UnscaledTime : AnimatorUpdateMode.Normal;
+            }
+        }
+        bool _unscaled;
+        // A held pose from the AnimLibrary (e.g. "Sitting Drinking"), or null for the normal idle / typing.
+        public string Pose => _pose;
         public float WalkSpeed { get => walkSpeed; set => walkSpeed = value; }
 
         readonly Queue<Vector3> _path = new Queue<Vector3>();
@@ -22,7 +35,9 @@ namespace Hitman
         Vector3? _target;
         Action _onArrive;
         Animator _animator;
-        bool _speedParam, _rateParam, _workParam;
+        bool _speedParam, _rateParam, _workParam, _poseParam, _actParam;
+        AnimatorOverrideController _override;
+        string _pose, _walk;
 
         // ---- sitting on the actual seat ----
         // The seated (typing) pose puts the hips behind where the character stands, so on its own it floats
@@ -46,19 +61,84 @@ namespace Hitman
             if (_animator != null && _animator.isHuman) _hips = _animator.GetBoneTransform(HumanBodyBones.Hips);
             if (_hips == null && _body != null)
                 foreach (var t in _body.GetComponentsInChildren<Transform>()) if (t.name.EndsWith("Hips")) { _hips = t; break; }
-            _speedParam = _rateParam = _workParam = false;
+            _speedParam = _rateParam = _workParam = _poseParam = _actParam = false;
+            _override = null;
             if (_animator == null || _animator.runtimeAnimatorController == null) return;
             foreach (var p in _animator.parameters)
             {
                 if (p.name == "Speed") _speedParam = true;
                 if (p.name == "WalkRate") _rateParam = true;
                 if (p.name == "Working") _workParam = true;
+                if (p.name == "Posing") _poseParam = true;
+                if (p.name == "Act") _actParam = true;
             }
+            // Each character gets its own override of the shared controller, so it can hold its own pose.
+            if (_poseParam && AnimLibrary.I != null)
+            {
+                var ctrl = _animator.runtimeAnimatorController;
+                if (ctrl is AnimatorOverrideController o) ctrl = o.runtimeAnimatorController;
+                _override = new AnimatorOverrideController(ctrl) { name = name + " (poses)" };
+                _animator.runtimeAnimatorController = _override;
+                var keepPose = _pose;
+                var keepWalk = _walk;
+                _pose = null;
+                if (keepWalk != null) SetWalk(keepWalk);
+                if (keepPose != null) SetPose(keepPose);
+            }
+        }
+
+        // ---- poses & actions (Mixamo clips by name) ----
+
+        // Hold a pose until walking somewhere (or ClearPose). Non-looping clips hold their last frame (deaths).
+        public void SetPose(string clipName)
+        {
+            if (clipName == _pose) return;
+            var lib = AnimLibrary.I;
+            var clip = lib != null ? lib.Get(clipName) : null;
+            if (_override == null || clip == null) { _pose = null; return; }
+            bool wasPosing = _pose != null;
+            _pose = clipName;
+            _override[lib.posePlaceholder] = clip;
+            _animator.speed = 1;
+            _animator.SetBool("Posing", true);
+            if (wasPosing && _animator.isActiveAndEnabled) _animator.Play("Pose", 0, 0);   // swap straight to the new pose
+        }
+
+        public void ClearPose()
+        {
+            _pose = null;
+            if (_animator != null && _poseParam) { _animator.SetBool("Posing", false); _animator.speed = 1; }
+        }
+
+        // A one-off move (pick something up, open a cupboard, point angrily), then back to whatever they were doing.
+        public void PlayAction(string clipName)
+        {
+            var lib = AnimLibrary.I;
+            var clip = lib != null ? lib.Get(clipName) : null;
+            if (_override == null || clip == null || !_actParam) return;
+            _override[lib.actionPlaceholder] = clip;
+            _animator.SetTrigger("Act");
+        }
+
+        // Walk with a different walk cycle (texting, carrying a bag); null = the normal walk.
+        public void SetWalk(string clipName)
+        {
+            _walk = clipName;
+            var lib = AnimLibrary.I;
+            if (_override == null || lib == null || lib.walkClip == null) return;
+            _override[lib.walkClip] = clipName != null ? lib.Get(clipName) : null;
+        }
+
+        // Stop the body where it is (dead).
+        public void Freeze(bool on)
+        {
+            if (_animator != null) _animator.speed = on ? 0 : 1;
         }
 
         public void WalkTo(Vector3 target, Action onArrive = null)
         {
             Seated = false;
+            ClearPose();
             _onArrive = onArrive;
             _path.Clear();
             _navPath ??= new NavMeshPath();
@@ -170,8 +250,9 @@ namespace Hitman
             if (_target is Vector3 t)
             {
                 var pos = transform.position;
-                var next = Vector3.MoveTowards(pos, t, walkSpeed * Time.deltaTime);
-                moved = (next - pos).magnitude / Mathf.Max(Time.deltaTime, 0.0001f);
+                float dt = _unscaled ? Time.unscaledDeltaTime : Time.deltaTime;
+                var next = Vector3.MoveTowards(pos, t, walkSpeed * dt);
+                moved = (next - pos).magnitude / Mathf.Max(dt, 0.0001f);
                 Face(t);
                 transform.position = next;
                 if ((next - t).sqrMagnitude < 0.0004f)
@@ -183,7 +264,7 @@ namespace Hitman
             if (_animator == null) return;
             if (_speedParam) _animator.SetFloat("Speed", moved);
             if (_rateParam && moved > 0.1f) _animator.SetFloat("WalkRate", Mathf.Clamp(moved / walkAnimSpeed, 0.5f, 3f));
-            if (_workParam) _animator.SetBool("Working", Seated && _target == null);
+            if (_workParam) _animator.SetBool("Working", Seated && _target == null && _pose == null);
         }
     }
 }

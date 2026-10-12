@@ -13,37 +13,90 @@ MonoBehaviour:
   m_Name: Routine_Coworker
   m_EditorClassIdentifier: Assembly-CSharp::Hitman.Routine
   displayName: Oscar
+  photo: {fileID: 0}
   info: Kevin's coworker. Doesn't drink.
   address: Apartments, Business District
   phone: 555-0187
+  standPose: 
+  walk: 
   steps:
   - time: 09:20
     place: business.tower1.desk.coworker
     activity: 2
     options: []
+    pose: 
     note: 
+    documented: 
+    opening: 0
+    chatter: []
+    overheard: 
   - time: 11:28
     place: business.tower1.desk.kevin.side
     activity: 0
     options: []
+    pose: Talking At Watercooler
     note: Wakes Kevin up.
+    documented: 
+    opening: 0
+    chatter: []
+    overheard: 
   - time: 11:35
     place: business.tower1.desk.coworker
     activity: 2
     options: []
+    pose: 
     note: 
+    documented: 
+    opening: 0
+    chatter: []
+    overheard: 
   - time: 13:00
     place: business.cornerbar.stool2
     activity: 1
     options: []
+    pose: Sitting Talking
     note: Lunch with Kevin (doesn't drink).
+    documented: 
+    opening: 0
+    chatter: []
+    overheard: 
   - time: 14:00
     place: business.tower1.desk.coworker
     activity: 2
     options: []
+    pose: 
     note: 
+    documented: 
+    opening: 0
+    chatter: []
+    overheard: 
+  - time: 15:31
+    place: business.tower1.floor5.coffee2
+    activity: 0
+    options: []
+    pose: Drinking
+    note: Coffee with Kevin.
+    documented: 
+    opening: 0
+    chatter: []
+    overheard: 
+  - time: 15:40
+    place: business.tower1.desk.coworker
+    activity: 2
+    options: []
+    pose: 
+    note: 
+    documented: 
+    opening: 0
+    chatter: []
+    overheard: 
   - time: 17:00
     place: business.apartments.door
     activity: 7
     options: []
+    pose: 
     note: Home.
+    documented: 
+    opening: 0
+    chatter: []
+    overheard: 

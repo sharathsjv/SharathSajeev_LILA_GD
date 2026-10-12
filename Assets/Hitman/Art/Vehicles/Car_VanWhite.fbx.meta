@@ -32,8 +32,18 @@ ModelImporter:
   - first:
       type: UnityEngine:Material
       assembly: UnityEngine.CoreModule
+      name: M_Shk_BarberPole
+    second: {fileID: 2100000, guid: 1da27ec3937c3469899daa163d377c40, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
       name: M_Shk_Bark
     second: {fileID: 2100000, guid: 3771e8eee541bb8818ebc3a24c3e42f6, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: M_Shk_BasketRed
+    second: {fileID: 2100000, guid: 0b5086aeea0035ef0a1962daf488c904, type: 2}
   - first:
       type: UnityEngine:Material
       assembly: UnityEngine.CoreModule
@@ -217,6 +227,41 @@ ModelImporter:
   - first:
       type: UnityEngine:Material
       assembly: UnityEngine.CoreModule
+      name: M_Shk_FlagBlue
+    second: {fileID: 2100000, guid: 1ce7260f285b3d29f91602c9bc700d2c, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: M_Shk_FlagRed
+    second: {fileID: 2100000, guid: a55bf1327b9e42f0b8018d49eaad844b, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: M_Shk_FlagYellow
+    second: {fileID: 2100000, guid: 813bf60ba807bd0fcb75d8f359d585d4, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: M_Shk_FloorBarber
+    second: {fileID: 2100000, guid: db76d078cf34c1feb917f1c7060efbd7, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: M_Shk_FloorMall
+    second: {fileID: 2100000, guid: 26af1029acfe58e2eaad7b958ddc2615, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: M_Shk_FloorShop
+    second: {fileID: 2100000, guid: 84d7fddda1ce4af3f8a94ce24b9b8049, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: M_Shk_Freezer
+    second: {fileID: 2100000, guid: 983757fbf32d252db86f3656562ceeab, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
       name: M_Shk_GarageDoor
     second: {fileID: 2100000, guid: f6039a79f947b5c4b853a91b10bca006, type: 2}
   - first:
@@ -244,6 +289,11 @@ ModelImporter:
       assembly: UnityEngine.CoreModule
       name: M_Shk_GlassPartition
     second: {fileID: 2100000, guid: 56421c6b360e51938a8fbb47057e5e07, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: M_Shk_Goods
+    second: {fileID: 2100000, guid: 143e85f97d797e05c98d9381831964bb, type: 2}
   - first:
       type: UnityEngine:Material
       assembly: UnityEngine.CoreModule
@@ -304,6 +354,11 @@ ModelImporter:
       assembly: UnityEngine.CoreModule
       name: M_Shk_LampGlass
     second: {fileID: 2100000, guid: dd68af891ebcbba0e88a031700526205, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: M_Shk_LeatherBlack
+    second: {fileID: 2100000, guid: 1c1ceaf7475ebddeaa0a44fcea45b884, type: 2}
   - first:
       type: UnityEngine:Material
       assembly: UnityEngine.CoreModule
@@ -412,6 +467,26 @@ ModelImporter:
   - first:
       type: UnityEngine:Material
       assembly: UnityEngine.CoreModule
+      name: M_Shk_PosterCola
+    second: {fileID: 2100000, guid: 8b735f9a43071b40581f1268e712ae97, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: M_Shk_PosterFly
+    second: {fileID: 2100000, guid: ec5bac6c4b1a8320ebbf59f489f96a7d, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: M_Shk_PosterSale
+    second: {fileID: 2100000, guid: 1a71f3e7948763bec8530c945cc4941b, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: M_Shk_Produce
+    second: {fileID: 2100000, guid: f5ca2f07855a26e3e95b1f51d5219691, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
       name: M_Shk_Puddle
     second: {fileID: 2100000, guid: 520de7e6e053efecda4fe90f7a0f25f2, type: 2}
   - first:
@@ -424,6 +499,11 @@ ModelImporter:
       assembly: UnityEngine.CoreModule
       name: M_Shk_RoofRed
     second: {fileID: 2100000, guid: c91ed6d364b0e7d1d9fd0b10da92ed37, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: M_Shk_ShelfGrey
+    second: {fileID: 2100000, guid: 07969c5fff116a3158205e11f441a45c, type: 2}
   - first:
       type: UnityEngine:Material
       assembly: UnityEngine.CoreModule
@@ -467,8 +547,18 @@ ModelImporter:
   - first:
       type: UnityEngine:Material
       assembly: UnityEngine.CoreModule
+      name: M_Shk_SignBarber
+    second: {fileID: 2100000, guid: 3aac672499fd281eab6804b081419725, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
       name: M_Shk_SignCafe
     second: {fileID: 2100000, guid: 464e98c5e0e06a907a6321056bdc6a7d, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: M_Shk_SignClosed
+    second: {fileID: 2100000, guid: 98b41187c80a90e68843a7c204232b53, type: 2}
   - first:
       type: UnityEngine:Material
       assembly: UnityEngine.CoreModule
@@ -479,6 +569,11 @@ ModelImporter:
       assembly: UnityEngine.CoreModule
       name: M_Shk_SignDiner
     second: {fileID: 2100000, guid: 363f4548e1fa3a0b2aeacdd9315bf47b, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: M_Shk_SignFoodCourt
+    second: {fileID: 2100000, guid: 0a017fba5bebf252a9f11d8ed0531542, type: 2}
   - first:
       type: UnityEngine:Material
       assembly: UnityEngine.CoreModule
@@ -517,6 +612,11 @@ ModelImporter:
   - first:
       type: UnityEngine:Material
       assembly: UnityEngine.CoreModule
+      name: M_Shk_SignNews
+    second: {fileID: 2100000, guid: 8b5a364488329c76a821732f6ca7f323, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
       name: M_Shk_SignPaper
     second: {fileID: 2100000, guid: 8e28cb1ec69064030aaa7763712a7a5d, type: 2}
   - first:
@@ -527,13 +627,28 @@ ModelImporter:
   - first:
       type: UnityEngine:Material
       assembly: UnityEngine.CoreModule
+      name: M_Shk_SignPest
+    second: {fileID: 2100000, guid: d55a6f02adb787f5d87ab537cab8b746, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
       name: M_Shk_SignSchrute
     second: {fileID: 2100000, guid: eb3c6b78f8b605bb5ab6efd64d73f50f, type: 2}
   - first:
       type: UnityEngine:Material
       assembly: UnityEngine.CoreModule
+      name: M_Shk_SignShopNSave
+    second: {fileID: 2100000, guid: 03df3eeeba1acf136a42a38846b32da5, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
       name: M_Shk_SignSubway
     second: {fileID: 2100000, guid: ddb4276e3bf1682efb882a5390596cfe, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: M_Shk_SignSuits
+    second: {fileID: 2100000, guid: 6e7ec8c432c7691c0bc62c8331f3965e, type: 2}
   - first:
       type: UnityEngine:Material
       assembly: UnityEngine.CoreModule

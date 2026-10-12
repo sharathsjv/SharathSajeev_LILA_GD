@@ -21,6 +21,12 @@ namespace Hitman
         public string CurrentPlaceId { get; private set; }
         public float Intoxication { get; set; }   // used by kill methods
         public bool Alive { get; set; } = true;
+        // The step they're on right now (for documenting it in the notebook, eavesdropping, kill set-ups).
+        public int StepIndex => _stepIndex;
+        public RoutineStep Step => routine != null && _stepIndex >= 0 && _stepIndex < routine.steps.Length ? routine.steps[_stepIndex] : null;
+        // At the step's place and doing it (not still on their way).
+        public bool Settled => _legs.Count == 0 && !InTransit && CurrentPlaceId != null;
+        public bool IsAwake => Alive && Activity != Activity.Sleep && Activity != Activity.PassedOut && Activity != Activity.Hidden;
 
         // Journey = list of legs: walk to a point in an area, ride the subway, or step through a door.
         enum LegKind { Walk, Subway, Door }
@@ -57,6 +63,12 @@ namespace Hitman
 
         void Awake() => _mover = GetComponent<CharacterMover>();
 
+        void Start()
+        {
+            if (routine != null && !string.IsNullOrEmpty(routine.walk)) _mover.SetWalk(routine.walk);
+            ApplyPose();
+        }
+
         // Start of each day: re-roll branching steps and put them where yesterday ended.
         public void BeginDay(int day)
         {
@@ -84,6 +96,22 @@ namespace Hitman
             var (place, act) = Resolve(last);
             var p = Place.Find(place);
             if (p != null) Arrive(p.Area.Id, p.transform.position, p.transform.rotation, act, place);
+        }
+
+        // Back to a checkpoint: where they'd be at this time of day, already there.
+        public void ResyncTo(int day, float minutes, bool alive)
+        {
+            Alive = true;
+            _mover.Freeze(false);
+            BeginDay(day);
+            int idx = StepAt(minutes);
+            _stepIndex = idx;
+            var (placeId, act) = Resolve(idx);
+            var p = Place.Find(placeId);
+            if (p != null) Arrive(p.Area.Id, p.transform.position, p.transform.rotation, act, placeId);
+            if (!alive) Die();
+            Visible = !Visible;      // force SetVisible to re-apply next tick
+            SetVisible(!Visible);
         }
 
         (string place, Activity act) Resolve(int i)
@@ -204,10 +232,11 @@ namespace Hitman
             _legs.Enqueue(Walk(destArea, place));
             _pendingActivity = act;
             _pendingPlace = placeId;
+            _pendingPose = _stepIndex >= 0 && _stepIndex < routine.steps.Length ? routine.steps[_stepIndex].pose : null;
         }
 
         Activity _pendingActivity;
-        string _pendingPlace;
+        string _pendingPlace, _pendingPose, _posing;
 
         void StartLeg(Leg leg, float minutes, bool onScreen)
         {
@@ -236,6 +265,8 @@ namespace Hitman
 
         void Arrive(string district, Vector3 pos, Quaternion facing, Activity act, string placeId)
         {
+            _posing = _pendingPose;
+            _pendingPose = null;
             AreaId = district;
             transform.SetPositionAndRotation(pos, facing);
             Activity = act;
@@ -245,24 +276,54 @@ namespace Hitman
             ApplyPose();
         }
 
-        // Lying down for Sleep / PassedOut (placeholder until we have lying animations).
+        // The pose for what they're doing: the step's own pose, else one that fits the activity.
+        // Lying on a bed or couch uses the sleeping clip, lifted onto the cushions.
         void ApplyPose()
         {
             if (model == null) return;
-            // Passing out at a desk or bar keeps them slumped in the seat; on a bed or couch they lie down.
             bool soft = CurrentPlaceId != null && (CurrentPlaceId.Contains("bed") || CurrentPlaceId.Contains("couch"));
             bool lying = Activity == Activity.Sleep || (Activity == Activity.PassedOut && soft) || (!Alive && soft);
-            model.localRotation = lying ? Quaternion.Euler(-90, 0, 0) : Quaternion.identity;
-            model.localPosition = lying ? new Vector3(0, 0.45f, 0) : Vector3.zero;
+            model.localRotation = Quaternion.identity;
+            model.localPosition = lying ? new Vector3(0, soft ? 0.45f : 0, 0) : Vector3.zero;
+            if (!Alive) return;   // the death pose stays
+            string pose = _posing;
+            if (string.IsNullOrEmpty(pose))
+                switch (Activity)
+                {
+                    case Activity.Stand: pose = routine.standPose; break;
+                    case Activity.Sit: pose = "Sitting Idle"; break;
+                    case Activity.Drink:
+                    case Activity.Eat: pose = "Sitting Drinking"; break;
+                    case Activity.Sleep: pose = "Sleeping Idle"; break;
+                    case Activity.PassedOut: pose = lying ? "Sleeping Idle" : "Seated Idle"; break;
+                }
+            if (string.IsNullOrEmpty(pose)) _mover.ClearPose();
+            else _mover.SetPose(pose);
         }
 
-        public void Die()
+        // Dead: they drop (or stay lying where they passed out) and stop moving.
+        public void Die(string how = null)
         {
             Alive = false;
+            bool soft = CurrentPlaceId != null && (CurrentPlaceId.Contains("bed") || CurrentPlaceId.Contains("couch"));
+            bool lying = soft && (Activity == Activity.Sleep || Activity == Activity.PassedOut || Activity == Activity.Eat || Activity == Activity.Sit);
             Activity = Activity.PassedOut;
             _legs.Clear();
             _mover.Stop();
             ApplyPose();
+            if (lying)
+            {
+                _mover.SetPose("Sleeping Idle");
+                _mover.Freeze(true);
+            }
+            else
+            {
+                _mover.Seated = false;
+                model.localPosition = Vector3.zero;
+                // They're usually facing something (a counter, the urinal): fall away from it.
+                if (how != "slip") transform.Rotate(0, 180, 0);
+                _mover.SetPose(how == "slip" ? "Stumble Backwards" : "Falling Forward Death");
+            }
         }
 
         void SetVisible(bool v)

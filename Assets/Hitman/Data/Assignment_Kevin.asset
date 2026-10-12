@@ -14,7 +14,13 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::Hitman.Assignment
   sender: Anonymous
   subject: A job
-  body: I've heard you "dispose" of people for a living and you make it look like an accident. I have a job for you.
+  body: 'I''ve heard you "dispose" of people for a living and you make it look like an accident. I have a job for you.
+
+
+    I will give you $500 for this if I see Kevin Malone''s name on the paper tomorrow. If it delays, then I''ll give you only $100.
+
+
+    If you need a tip, I can give you one for a discounted rate of $50.'
   target: {fileID: 11400000, guid: b5c0de28464ee8e1cb024091e09fc795, type: 2}
   startingNotes: '- Go to Business District.
 

@@ -251,10 +251,10 @@ cyl("Liv_EntranceDoorKnob", 2.94, 2.45, 1.0, 0.03, 0.06, "MetalDark", ry=math.pi
 
 # ---------------------------------------------------------------- kitchen
 
-obox("Kit_Fridge", 0.27, 7.95, 0, 0.66, 0.68, 1.78, "MetalWhite")
-box("Kit_FridgeSeam", 0.6, 0.615, 7.62, 8.28, 1.22, 1.24, "MetalDark")
-box("Kit_FridgeHandle", 0.6, 0.64, 7.66, 7.7, 0.7, 1.15, "MetalDark")
-box("Kit_FridgeHandle2", 0.6, 0.64, 7.66, 7.7, 1.35, 1.6, "MetalDark")
+obox("Kit_Fridge", 0.27, 7.95, 0, 0.66, 0.68, 1.78, "MetalWhite")           # back to the side wall, door facing the table
+box("Kit_FridgeSeam", -0.05, 0.59, 7.595, 7.61, 1.22, 1.24, "MetalDark")
+box("Kit_FridgeHandle", 0.49, 0.53, 7.57, 7.61, 0.7, 1.15, "MetalDark")
+box("Kit_FridgeHandle2", 0.49, 0.53, 7.57, 7.61, 1.35, 1.6, "MetalDark")
 
 box("Kit_CounterN", 0.62, 1.72, 7.73, 8.325, 0, 0.86, "Cabinet")
 box("Kit_CounterNTop", 0.6, 1.74, 7.7, 8.325, 0.86, 0.9, "Formica")
@@ -304,7 +304,7 @@ for i in range(3):
     cyl(f"Kit_Plate{i}", 1.5, 8.0, 0.9 + i * 0.02, 0.11, 0.018, "Ceramic", seg=10)
 for i, (bx, by, m) in enumerate([(2.55, 6.1, "GlassBrown"), (2.65, 6.25, "GlassGreen"), (2.75, 6.05, "GlassBrown"), (0.68, 7.95, "GlassGreen")]):
     cyl(f"Kit_CounterBottle{i}", bx, by, 0.9, 0.035, 0.26, m, seg=8)
-blob("Kit_Trash", 0.22, 7.2, 0, 0.5, 0.45, 0.55, "Trash")
+blob("Kit_Trash", 0.22, 5.05, 0, 0.5, 0.45, 0.55, "Trash")          # in the corner by the door, clear of the fridge
 for i in range(3):
     obox(f"Kit_PizzaBox{i}", 0.25, 5.15, i * 0.045, 0.4, 0.4, 0.045, "Cardboard", rz=rng.uniform(-0.3, 0.3))
 

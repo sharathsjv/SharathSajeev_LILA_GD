@@ -1,0 +1,122 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 213e60a6dc0abf1cbabbb9c89f1a3fb9, type: 3}
+  m_Name: HitmanAnims
+  m_EditorClassIdentifier: Assembly-CSharp::Hitman.AnimLibrary
+  posePlaceholder: {fileID: 7400000, guid: 43ddf449f228b5e5ba67be4806c128a6, type: 2}
+  actionPlaceholder: {fileID: 7400000, guid: d6a7c60242f8ac441989bb18938e74a8, type: 2}
+  walkClip: {fileID: -203655887218126122, guid: 476d02959cb9d564480905f536f20e95, type: 3}
+  clips:
+  - name: Breathing Idle
+    clip: {fileID: -203655887218126122, guid: 9365d648574bc3b11ab370370a52176b, type: 3}
+  - name: Angry Gesture
+    clip: {fileID: -203655887218126122, guid: 46f2cde77020dd7ccb0f11b4ac53712c, type: 3}
+  - name: Angry Point
+    clip: {fileID: -203655887218126122, guid: 3e58f2d5b797dc27e85fb96b23f395dc, type: 3}
+  - name: Bartending
+    clip: {fileID: -203655887218126122, guid: 7ebb87ce2b10765f59baf3c9fc7bb989, type: 3}
+  - name: Bored
+    clip: {fileID: -203655887218126122, guid: 8b08511b9bd62bc79b002bd1f49e2d85, type: 3}
+  - name: Drinking
+    clip: {fileID: -203655887218126122, guid: 2232e0d272968272f9dc30416e09a9f3, type: 3}
+  - name: Drunk Idle Variation
+    clip: {fileID: -203655887218126122, guid: da2bfd54a00cfeaa6a8a7d72245a088e, type: 3}
+  - name: Drunk Idle
+    clip: {fileID: -203655887218126122, guid: 403b1d3680f84d70895d1bd08a96746e, type: 3}
+  - name: Dying
+    clip: {fileID: -203655887218126122, guid: 7ec6f816de9e45aaba91122ab48941a2, type: 3}
+  - name: Falling Forward Death
+    clip: {fileID: -203655887218126122, guid: ab126e03acdb0fd3e9312b793671ae91, type: 3}
+  - name: Having A Meeting, Female
+    clip: {fileID: -203655887218126122, guid: 528227051bd59448681474e19fd5003f, type: 3}
+  - name: Having A Meeting, Male
+    clip: {fileID: -203655887218126122, guid: 51e0008123ef6a0ab932b87a649639ee, type: 3}
+  - name: Idle
+    clip: {fileID: -203655887218126122, guid: cb072f23687089cf2a025f8d0d14be92, type: 3}
+  - name: Kneeling Down
+    clip: {fileID: -203655887218126122, guid: 722abf6f4a58b3163a7e05f96547cfae, type: 3}
+  - name: Kneeling Inspecting
+    clip: {fileID: -203655887218126122, guid: 4b91d31c292b69c7c9f23e46259b4bd6, type: 3}
+  - name: Laying Breathless
+    clip: {fileID: -203655887218126122, guid: 1c3ad38877125a4b1b7f425c4cbc2b6b, type: 3}
+  - name: Leaning
+    clip: {fileID: -203655887218126122, guid: 7ffa0e80c2dcfebac96d7782390f0a5f, type: 3}
+  - name: Looking Through Files Low
+    clip: {fileID: -203655887218126122, guid: 7c66238f042516d2686a03bbb5df6e94, type: 3}
+  - name: One Shoulder Lean
+    clip: {fileID: -203655887218126122, guid: efea9822dbb0d55068b956b3455b7154, type: 3}
+  - name: Opening
+    clip: {fileID: -203655887218126122, guid: 9edfd6444d5d6ad83b29240f08bd4f83, type: 3}
+  - name: Picking Up Object
+    clip: {fileID: -203655887218126122, guid: 2cbed5318049ee8acae5fdc4c24a962d, type: 3}
+  - name: Putting Down
+    clip: {fileID: -203655887218126122, guid: 856469e2659d402f481da944fb55d4bd, type: 3}
+  - name: Seated Idle
+    clip: {fileID: -203655887218126122, guid: 65d168a285bfb67c897f3c0d10546882, type: 3}
+  - name: Sit To Stand
+    clip: {fileID: -203655887218126122, guid: 80c657749d3cf63918439e10ea978b0b, type: 3}
+  - name: Sit To Type
+    clip: {fileID: -203655887218126122, guid: d96514c57c72dd1b18048d9fdd32eda8, type: 3}
+  - name: Sitting (1)
+    clip: {fileID: -203655887218126122, guid: ae180f237dd09daa3a65f656209bbdf7, type: 3}
+  - name: Sitting Drinking
+    clip: {fileID: -203655887218126122, guid: 2c89299c293874ba7900084bc6ca1361, type: 3}
+  - name: Sitting Idle
+    clip: {fileID: -203655887218126122, guid: 0e2783b460334fcd7b212c86fc18b03f, type: 3}
+  - name: Sitting Laughing
+    clip: {fileID: -203655887218126122, guid: c324c2b7c522d360689d41e72ba2eb1d, type: 3}
+  - name: Sitting Talking
+    clip: {fileID: -203655887218126122, guid: b1faa98c69b5a5722986c5ff136279fd, type: 3}
+  - name: Sitting
+    clip: {fileID: -203655887218126122, guid: fa8a862cf9ddb1736993d1b2aa43ddd4, type: 3}
+  - name: Sleeping Idle
+    clip: {fileID: -203655887218126122, guid: 87554f3d8e877ce4eb19abca683867c8, type: 3}
+  - name: Smoking
+    clip: {fileID: -203655887218126122, guid: e60c77aca9b096328a15c71e9c150a54, type: 3}
+  - name: Stand To Sit
+    clip: {fileID: -203655887218126122, guid: 5a97d7cd2fe96c483ac172fb1900c94c, type: 3}
+  - name: Standing Arguing
+    clip: {fileID: -203655887218126122, guid: 5e8585dfe9f7d28848c3660fdfbf438c, type: 3}
+  - name: Stumble Backwards
+    clip: {fileID: -203655887218126122, guid: 6f9fb13f968da934db019d4cff81560e, type: 3}
+  - name: Taking Item
+    clip: {fileID: -203655887218126122, guid: e6d0497fd8d46a41183d7e5d391336ab, type: 3}
+  - name: Talking At Watercooler
+    clip: {fileID: -203655887218126122, guid: 3ad90a136d57efa50ba98095146a16e1, type: 3}
+  - name: Talking On A Cell Phone
+    clip: {fileID: -203655887218126122, guid: bad691b2bddf0e28daa202f9624c06c8, type: 3}
+  - name: Talking On Phone
+    clip: {fileID: -203655887218126122, guid: 43494fc6452bf79e49c909774372b5df, type: 3}
+  - name: Talking Phone Pacing
+    clip: {fileID: -203655887218126122, guid: f9956c53160af312ea8ecb2da871af6f, type: 3}
+  - name: Talking
+    clip: {fileID: -203655887218126122, guid: cc4abcdedd6572bc3ade5b02f8fa9f38, type: 3}
+  - name: Texting While Standing
+    clip: {fileID: -203655887218126122, guid: b62a7f1fc98271d288a4dd81e184dbe3, type: 3}
+  - name: Texting
+    clip: {fileID: -203655887218126122, guid: 85155127e44c2d6e6995ba4156e1280c, type: 3}
+  - name: Type To Sit
+    clip: {fileID: -203655887218126122, guid: c499d9cc62941595980e7055638ad6d9, type: 3}
+  - name: Using A Filing Cabinet
+    clip: {fileID: -203655887218126122, guid: cb805c81e5f454869aaca6627798bc6f, type: 3}
+  - name: Waking
+    clip: {fileID: -203655887218126122, guid: 8f694a33fefb4c2c1aa839d4b01d8530, type: 3}
+  - name: Walking While Texting
+    clip: {fileID: -203655887218126122, guid: ec49c541d6a6083feb235922eaf6087e, type: 3}
+  - name: Walking With Shopping Bag
+    clip: {fileID: -203655887218126122, guid: 47d6a871aeeb9a7e3a6642c66998d388, type: 3}
+  - name: Idle
+    clip: {fileID: -203655887218126122, guid: 9c1734858a9f226aeb204bced2667d3d, type: 3}
+  - name: Typing
+    clip: {fileID: -203655887218126122, guid: 7a889509dbcc701219f9eed6fca70650, type: 3}
+  - name: Walking
+    clip: {fileID: -203655887218126122, guid: 476d02959cb9d564480905f536f20e95, type: 3}

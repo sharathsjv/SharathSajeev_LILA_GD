@@ -184,58 +184,59 @@ def basin(name, x0, x1, wall_y, mirror=True):
     return B.done()
 
 
-# ================================================================ Schrute Towers lobby (20 x 16)
+# ================================================================ Schrute Towers lobby (26 x 20)
 
 def lobby():
     reset(51)
-    W, D, H = 10.0, 8.0, 6.0
+    W, D, H = 13.0, 10.0, 6.0
     floor("Lob_Floor", -W, W, -D, D, "Marble", 1.0)
     single("NoCol_LobBand", (-W, W, -0.4, 0.4, 0.0, 0.004, "MarbleDark"), )
     wall("Lob_WallN", "x", D, -W, W, H, "Limestone")
-    elevator_core("Lob", -2.0, 2.0, 4.6, D - 0.1, H, "LimestoneDark")       # the shaft, elevators on both sides
-    single("Lob_SignSchrute", (-1.9, 1.9, 4.52, 4.58, 3.4, 4.1, "SignSchrute"))
-    wall("Lob_WallE", "y", W, -D, D, H, "Limestone", [(y, y + 2.4, 0.4, 5.6) for y in (-7.0, -4.2, -1.4, 1.4, 4.2)], glass="GlassOffice")
+    elevator_core("Lob", -2.0, 2.0, D - 3.6, D - 0.1, H, "LimestoneDark")    # the shaft against the back wall, elevators both sides
+    single("Lob_SignSchrute", (-1.9, 1.9, D - 3.68, D - 3.62, 3.4, 4.1, "SignSchrute"))
+    wall("Lob_WallE", "y", W, -D, D, H, "Limestone", [(y, y + 2.4, 0.4, 5.6) for y in (-9.0, -5.5, -2.0, 1.5, 5.0)], glass="GlassOffice")
     wall("Lob_WallS", "x", -D, -W, W, H, "Limestone", [(-0.9, 0.9, 0, 2.5)], low=True)
     wall("Lob_WallW", "y", -W, -D, D, H, "Limestone", low=True)
     for side in (-1, 1):                                                       # stairs at both ends, up to a gallery
-        xa, xb = sorted((side * 7.4, side * 9.4))
-        stairs(f"Lob_Stairs{'E' if side > 0 else 'W'}", xa, xb, 1.6, 7.6, rise=3.6, steps=16)
-    for (x, y) in [(-6.2, -3.0), (6.2, -3.0), (-6.2, 3.2), (6.2, 3.2)]:
+        xa, xb = sorted((side * 10.6, side * 12.6))
+        stairs(f"Lob_Stairs{'E' if side > 0 else 'W'}", xa, xb, 2.4, 9.6, rise=3.6, steps=16)
+    for (x, y) in [(-8.0, -4.0), (8.0, -4.0), (-8.0, 4.0), (8.0, 4.0)]:
         B = Builder(f"Lob_Column{x:.0f}{y:.0f}", (x, y, 0))
         B.box(x - 0.35, x + 0.35, y - 0.35, y + 0.35, 0, H, "MarbleDark").box(x - 0.45, x + 0.45, y - 0.45, y + 0.45, 0, 0.3, "Limestone")
         B.done()
-    # reception desk with the company sign
-    B = Builder("Lob_Reception", (0, 2.6, 0))
-    B.box(-2.2, 2.2, 1.9, 2.5, 0, 1.05, "MarbleDark").box(-2.3, 2.3, 1.8, 2.6, 1.05, 1.12, "Laminate")
+    # reception desk in front of the elevator core
+    B = Builder("Lob_Reception", (0, 3.7, 0))
+    B.box(-2.2, 2.2, 3.4, 4.0, 0, 1.05, "MarbleDark").box(-2.3, 2.3, 3.3, 4.1, 1.05, 1.12, "Laminate")
     B.done()
-    chair("Lob_ReceptionChair", 0.0, 3.1, (0, -1), office=True)
-    computer("Lob_ReceptionPC", 0.6, 2.35, (0, 1))
-    # seating areas in front of reception
+    chair("Lob_ReceptionChair", 0.0, 4.6, (0, -1), office=True)
+    computer("Lob_ReceptionPC", 0.6, 3.85, (0, 1))
+    # seating areas either side
     for side in (-1, 1):
-        cx = side * 4.4
-        sofa(f"Lob_Sofa{side}A", cx - 1.2, cx + 1.2, -0.2, 0.6, (0, -1), "FabricCream")
+        cx = side * 5.6
+        sofa(f"Lob_Sofa{side}A", cx - 1.2, cx + 1.2, 0.0, 0.8, (0, -1), "FabricCream")
         sofa(f"Lob_Sofa{side}B", cx - 1.2, cx + 1.2, -2.8, -2.0, (0, 1), "FabricCream")
         table(f"Lob_CoffeeTable{side}", cx - 0.7, cx + 0.7, -1.6, -0.6, h=0.42, top="MarbleDark", legs="Brass")
-        single(f"NoCol_LobRug{side}", (cx - 1.8, cx + 1.8, -3.2, 1.0, 0.0, 0.01, "FabricBlue"))
-        plant(f"Lob_Plant{side}A", side * 8.8, -6.8)
-        plant(f"Lob_Plant{side}B", side * 2.8, -1.4, h=1.0)
+        single(f"NoCol_LobRug{side}", (cx - 1.8, cx + 1.8, -3.2, 1.2, 0.0, 0.01, "FabricBlue"))
+        plant(f"Lob_Plant{side}A", side * 11.8, -8.8)
+        plant(f"Lob_Plant{side}B", side * 3.2, -1.4, h=1.0)
+        plant(f"Lob_Plant{side}C", side * 4.0, D - 0.8)
     # security check at the entrance: two walk-through gates and a guard desk
     for x in (-1.6, 1.6):
-        B = Builder(f"Lob_Gate{x:.0f}", (x, -5.2, 0))
-        B.box(x - 0.55, x - 0.45, -5.4, -5.0, 0, 2.2, "Steel").box(x + 0.45, x + 0.55, -5.4, -5.0, 0, 2.2, "Steel")
-        B.box(x - 0.55, x + 0.55, -5.4, -5.0, 2.1, 2.25, "Steel")
+        B = Builder(f"Lob_Gate{x:.0f}", (x, -7.0, 0))
+        B.box(x - 0.55, x - 0.45, -7.2, -6.8, 0, 2.2, "Steel").box(x + 0.45, x + 0.55, -7.2, -6.8, 0, 2.2, "Steel")
+        B.box(x - 0.55, x + 0.55, -7.2, -6.8, 2.1, 2.25, "Steel")
         B.done()
-    B = Builder("Lob_SecurityDesk", (4.0, -5.2, 0))
-    B.box(3.0, 5.0, -5.6, -4.9, 0, 1.0, "DeskGrey").box(2.95, 5.05, -5.65, -4.85, 1.0, 1.05, "Laminate")
+    B = Builder("Lob_SecurityDesk", (4.4, -7.0, 0))
+    B.box(3.4, 5.4, -7.4, -6.7, 0, 1.0, "DeskGrey").box(3.35, 5.45, -7.45, -6.65, 1.0, 1.05, "Laminate")
     B.done()
-    computer("Lob_SecurityPC", 3.6, -5.25, (0, -1))
-    chair("Lob_GuardChair", 4.2, -4.4, (0, -1), office=True)
+    computer("Lob_SecurityPC", 4.0, -7.05, (0, -1))
+    chair("Lob_GuardChair", 4.6, -6.2, (0, -1), office=True)
     for x in (-3.8, -2.4, 2.4):                                                 # rope posts guiding the queue
-        single(f"Lob_Post{x:.0f}", (x - 0.06, x + 0.06, -4.8, -4.68, 0, 0.95, "Brass"))
+        single(f"Lob_Post{x:.0f}", (x - 0.06, x + 0.06, -6.6, -6.48, 0, 0.95, "Brass"))
     door = Builder("Lob_Door", (0, -D, 0))
     door.box(-0.9, 0.9, -D - 0.05, -D + 0.05, 0, 2.5, "GlassOffice").box(-0.02, 0.02, -D - 0.06, -D + 0.06, 0, 2.5, "Steel")
     door.done()
-    for i, (x, y) in enumerate([(-5, -4), (0, -4), (5, -4), (-5, 1.5), (0, 0.5), (5, 1.5), (-5, 6), (5, 6)]):
+    for i, (x, y) in enumerate([(-6.5, -6), (0, -6), (6.5, -6), (-6.5, 0.5), (0, 0.5), (6.5, 0.5), (-6.5, 7), (6.5, 7)]):
         ceiling_light(f"LightSrc_Bulb_Lobby{i}", x, y, 5.2, 1.6, 0.4)
     export(OUT + "/SchruteLobby.fbx", HERE + "/SchruteLobby.blend")
 
@@ -248,14 +249,15 @@ DESKS = [(-3.5, 3.6), (-3.5, 0.4), (-3.5, -2.8), (3.0, 3.6), (3.0, 0.4), (3.0, -
 def floor5():
     reset(52)
     W, D, H = 11.0, 9.0, 3.0
+    N = 11.0                                                                  # north edge: the elevator lobby is 5.5 m deep
     floor("Off_Floor", -7.5, W, -5.5, 5.5, "CarpetOffice", 1.0)
     floor("Off_FloorRestrooms", -W, -7.5, -1.5, 5.5, "TileWhite", 0.5)
     floor("Off_FloorBreak", -W, -7.5, -D, -1.5, "TileKitchen", 0.6)
-    floor("Off_FloorLeft", -W, -7.5, 5.5, D, "CarpetOffice", 1.0)
+    floor("Off_FloorLeft", -W, -7.5, 5.5, N, "CarpetOffice", 1.0)
     floor("Off_FloorRooms", -7.5, W, -D, -5.5, "CarpetOffice", 1.0)
-    wall("Off_WallN", "x", D, -W, W, H, "PaintOffice")
-    floor("Off_FloorLift", -7.5, W, 5.5, D, "Marble", 1.0)                   # the elevator lobby outside the office
-    elevator_core("Off", -2.0, 2.0, 6.5, D - 0.1, H, "LimestoneDark")
+    wall("Off_WallN", "x", N, -W, W, H, "PaintOffice")
+    floor("Off_FloorLift", -7.5, W, 5.5, N, "Marble", 1.0)                   # the elevator lobby outside the office
+    elevator_core("Off", -2.0, 2.0, N - 3.6, N - 0.1, H, "LimestoneDark")
     # the office's front: glass wall with a frosted band, a wide entrance and the company sign above it
     B = Builder("Off_Entrance", (0, 5.5, 0))                                 # wood lower half, framed glass above
     for (a0, a1) in ((-7.5, -0.9), (0.9, W)):
@@ -277,12 +279,12 @@ def floor5():
     single("Off_SignPaper", (-1.6, 1.6, 5.46, 5.54, 2.45, 2.9, "SignPaper"))
     single("Off_ReceptionDesk", (2.0, 4.0, 4.3, 4.9, 0, 1.0, "WoodDarkPolish"))
     chair("Off_ReceptionChair", 3.0, 3.8, (0, 1), office=True)
-    wall("Off_WallE", "y", W, -D, D, H, "PaintOffice", [(y, y + 2.6, 0.5, 2.7) for y in (-8.5, -5.6, -2.7, 0.2, 3.1, 6.0)], glass="GlassOffice")
+    wall("Off_WallE", "y", W, -D, N, H, "PaintOffice", [(y, y + 2.6, 0.5, 2.7) for y in (-8.5, -5.6, -2.7, 0.2, 3.1, 6.0, 8.2)], glass="GlassOffice")
     wall("Off_WallS", "x", -D, -W, W, H, "PaintOffice", low=True)
-    wall("Off_WallW", "y", -W, -D, D, H, "PaintOffice", low=True)
+    wall("Off_WallW", "y", -W, -D, N, H, "PaintOffice", low=True)
     for side in (-1, 1):                                                       # stair cores in the top corners
         xa, xb = sorted((side * 8.9, side * 10.8))
-        stairs(f"Off_Stairs{'E' if side > 0 else 'W'}", xa, xb, 6.0, 8.8, rise=2.9, steps=12, m="Concrete", rail="Steel")
+        stairs(f"Off_Stairs{'E' if side > 0 else 'W'}", xa, xb, N - 3.0, N - 0.2, rise=2.9, steps=12, m="Concrete", rail="Steel")
     # left column: utilities, ladies, mens (doors onto the office); break room below
     wall("Off_WallRooms", "y", -7.5, -D, 5.5, H, "PaintOffice", [(4.0, 4.9, 0, 2.1), (2.0, 2.9, 0, 2.1), (0.0, 0.9, 0, 2.1), (-3.6, -2.4, 0, 2.1)])
     for y, nm in ((3.5, "Util"), (1.5, "Ladies"), (-1.5, "Mens")):
@@ -290,9 +292,15 @@ def floor5():
     wall("Off_WallUtilTop", "x", 5.5, -W, -7.5, H, "PaintOffice")
     single("Off_SignWomen", (-7.38, -7.36, 2.1, 2.8, 2.2, 2.5, "SignWomen"))
     single("Off_SignMen", (-7.38, -7.36, 0.1, 0.8, 2.2, 2.5, "SignMen"))
-    for k, y in enumerate((4.9, 4.1)):                                         # utilities: shelving, boiler
-        single(f"Off_UtilShelf{k}", (-10.8, -10.2, y - 0.35, y + 0.35, 0, 2.0, "Steel"))
-    single("Off_Boiler", (-8.6, -7.9, 3.8, 4.4, 0, 1.8, "MetalWhite"))
+    for k, x in enumerate((-10.4, -9.5)):                                       # utilities: shelving on the back wall
+        single(f"Off_UtilShelf{k}", (x - 0.42, x + 0.42, 5.0, 5.42, 0, 2.0, "Steel"))
+    single("Off_Boiler", (-10.95, -10.35, 3.58, 4.25, 0, 1.8, "MetalWhite"))   # boiler in the far corner
+    B = Builder("Off_MopBucket", (-9.75, 3.85, 0))                              # cleaning tools (opening 2)
+    B.cyl(-9.75, 3.85, 0, 0.2, 0.35, "DoorGreen", seg=10, r2=0.23)
+    B.box(-9.5, -9.45, 3.8, 3.9, 0, 1.4, "Wood", rot=(0, 0.18, 0), pivot=(-9.47, 3.85, 0))
+    B.box(-9.85, -9.35, 3.7, 4.0, 0.3, 0.42, "Linen")
+    B.done()
+    single("Off_WetFloorSign", (-8.6, -8.4, 5.05, 5.35, 0, 0.6, "SignTaxi"))
     for k, x in enumerate((-10.3, -9.1)):                                       # ladies: stalls + basin
         single(f"Off_LadiesStall{k}", (x - 0.6, x - 0.55, 1.6, 3.4, 0, 2.0, "DeskGrey"))
         toilet(f"Off_LadiesToilet{k}", x, 3.1, (0, -1))
@@ -307,7 +315,11 @@ def floor5():
         chair(f"Off_BreakChair{k}", x, y, f, seat="FabricRed")
     B = Builder("Off_BreakCounter", (-10.6, -3.0, 0))
     B.box(-10.95, -10.35, -4.2, -2.0, 0, 0.9, "Cabinet").box(-10.97, -10.33, -4.2, -2.0, 0.9, 0.94, "Laminate")
-    B.box(-10.85, -10.5, -2.6, -2.2, 0.94, 1.25, "MetalDark").box(-10.9, -10.45, -3.6, -3.1, 0.94, 1.2, "MetalWhite")
+    B.box(-10.9, -10.45, -3.6, -3.1, 0.94, 1.2, "MetalWhite")
+    B.done()
+    B = Builder("Off_CoffeeMachine", (-10.67, -2.4, 0.94))                    # the office coffee machine (opening 3)
+    B.box(-10.88, -10.45, -2.65, -2.15, 0.94, 1.32, "MetalDark").box(-10.86, -10.5, -2.6, -2.2, 1.32, 1.36, "Steel")
+    B.cyl(-10.6, -2.4, 0.95, 0.07, 0.14, "GlassBrown", seg=8)
     B.done()
     single("Off_BreakFridge", (-10.95, -10.3, -8.8, -8.1, 0, 1.8, "MetalWhite"))
     single("Off_Vending", (-8.5, -7.7, -8.8, -8.2, 0, 1.9, "CarRed"))
@@ -339,13 +351,13 @@ def floor5():
             for p in range(2):
                 single(f"NoCol_Paper{k}{s}{p}", (cx + 0.25 + p * 0.06, cx + 0.55 + p * 0.06, cy + s * 0.3 - 0.15, cy + s * 0.3 + 0.15,
                                                 0.74, 0.745 + p * 0.003, "Paper"))
-    for (x, y) in [(-6.8, 7.8), (6.8, 7.8), (9.8, 5.0), (-0.3, -4.6), (9.8, -4.6)]:
+    for (x, y) in [(-6.8, 9.8), (6.8, 9.8), (-6.8, 6.2), (6.8, 6.2), (9.8, 5.0), (-0.3, -4.6), (9.8, -4.6)]:
         plant(f"Off_Plant{x:.0f}{y:.0f}", x, y)
     single("Off_Copier", (-6.9, -6.0, -4.9, -4.2, 0, 1.1, "BeigePlastic"))
     single("Off_WaterCooler", (6.3, 6.7, 4.6, 5.0, 0, 1.3, "GlassOffice"))
     for k in range(3):
         single(f"Off_Filing{k}", (9.9, 10.6, -2.6 + k * 0.6, -2.1 + k * 0.6, 0, 1.3, "DeskGrey"))
-    for i, (x, y) in enumerate([(-3.5, 5.0), (3.0, 5.0), (-3.5, 1.9), (3.0, 1.9), (-3.5, -1.3), (3.0, -1.3), (-5.0, -7.2), (0.0, -7.2), (4.2, -7.2), (8.7, -7.2), (-9.3, -5.8), (-9.3, 2.5), (-5.0, 7.3), (5.0, 7.3)]):
+    for i, (x, y) in enumerate([(-3.5, 5.0), (3.0, 5.0), (-3.5, 1.9), (3.0, 1.9), (-3.5, -1.3), (3.0, -1.3), (-5.0, -7.2), (0.0, -7.2), (4.2, -7.2), (8.7, -7.2), (-9.3, -5.8), (-9.3, 2.5), (-5.0, 7.5), (5.0, 7.5), (-5.0, 9.8), (5.0, 9.8)]):
         ceiling_light(f"LightSrc_Bulb_Office{i}", x, y, 2.85, 1.2, 0.3)
     export(OUT + "/SchruteFloor5.fbx", HERE + "/SchruteFloor5.blend")
 
@@ -529,8 +541,6 @@ def bar():
     export(OUT + "/CornerBar.fbx", HERE + "/CornerBar.blend")
 
 
-lobby()
-floor5()
-house_ground()
-house_up()
-bar()
+if __name__ == "__main__":
+    for build in globals().get("BUILD", [lobby, floor5, house_ground, house_up, bar]):
+        build()

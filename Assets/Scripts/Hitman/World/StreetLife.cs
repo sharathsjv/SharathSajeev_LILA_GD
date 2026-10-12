@@ -112,6 +112,18 @@ namespace Hitman
             if (anim != null)
             {
                 anim.runtimeAnimatorController = animator;
+                // Some people text or carry shopping as they walk.
+                var lib = AnimLibrary.I;
+                if (lib != null && lib.walkClip != null && i % 3 != 0)
+                {
+                    var walk = lib.Get(i % 3 == 1 ? "Walking While Texting" : "Walking With Shopping Bag");
+                    if (walk != null)
+                    {
+                        var o = new AnimatorOverrideController(animator);
+                        o[lib.walkClip] = walk;
+                        anim.runtimeAnimatorController = o;
+                    }
+                }
                 anim.applyRootMotion = false;
                 anim.cullingMode = AnimatorCullingMode.CullCompletely;
             }

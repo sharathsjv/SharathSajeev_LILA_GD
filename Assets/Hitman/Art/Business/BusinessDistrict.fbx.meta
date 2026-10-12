@@ -217,6 +217,16 @@ ModelImporter:
   - first:
       type: UnityEngine:Material
       assembly: UnityEngine.CoreModule
+      name: M_Shk_FlagBlue
+    second: {fileID: 2100000, guid: 1ce7260f285b3d29f91602c9bc700d2c, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: M_Shk_FlagRed
+    second: {fileID: 2100000, guid: a55bf1327b9e42f0b8018d49eaad844b, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
       name: M_Shk_GarageDoor
     second: {fileID: 2100000, guid: f6039a79f947b5c4b853a91b10bca006, type: 2}
   - first:

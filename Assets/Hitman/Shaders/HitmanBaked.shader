@@ -57,6 +57,7 @@ Shader "Hitman/Baked"
             // Set every frame by DayNight.
             half4 _HitmanSky;     // sky/ambient colour for the time of day
             half _HitmanLamps;    // 0 = lamps off (day), 1 = full night
+            half4 _HitmanSun;     // the scenery's sun colour x intensity (the real light is toned down for characters)
 
             struct Attributes
             {
@@ -95,7 +96,7 @@ Shader "Hitman/Baked"
                 #endif
                 Light sun = GetMainLight();
                 half3 n = normalize(i.normalWS);
-                half3 light = sun.color * saturate(dot(n, sun.direction));
+                half3 light = _HitmanSun.rgb * saturate(dot(n, sun.direction));
 
                 half sky = 1;
                 half3 lamps = 0;

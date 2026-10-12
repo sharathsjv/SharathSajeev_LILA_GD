@@ -14,6 +14,9 @@ namespace Hitman
         [Tooltip("Only things at least this tall get faded (walls, buildings), not furniture.")]
         [SerializeField] float minHeight = 1.4f;
         [SerializeField] float probeRadius = 0.6f;
+        [Tooltip("Objects (by name prefix) that are always see-through, e.g. the elevated subway overhead.")]
+        [SerializeField] string[] alwaysFaded = { "Rail_Deck", "Rail_Platform" };
+        [SerializeField, Range(0, 1)] float alwaysFadedAlpha = 0.25f;
 
         // Anything whose underside is above this is overhead: faded when in the way, and taps pass through it.
         public const float OverheadHeight = 2.2f;
@@ -28,11 +31,33 @@ namespace Hitman
         readonly HashSet<Renderer> _hitThisFrame = new HashSet<Renderer>();
         readonly List<Renderer> _restore = new List<Renderer>();
         readonly RaycastHit[] _hits = new RaycastHit[32];
+        readonly HashSet<Renderer> _permanent = new HashSet<Renderer>();
+        readonly Dictionary<Material, Material> _permanentCopies = new Dictionary<Material, Material>();
+        Area _fadedArea;
+
+        // The always-see-through objects of the area the player is in.
+        void FadePermanent(Area area)
+        {
+            _fadedArea = area;
+            if (area == null) return;
+            foreach (var r in area.GetComponentsInChildren<Renderer>(true))
+            {
+                if (_permanent.Contains(r)) continue;
+                bool match = false;
+                foreach (var p in alwaysFaded) if (r.name.StartsWith(p)) { match = true; break; }
+                if (!match) continue;
+                var mats = r.sharedMaterials;
+                for (int i = 0; i < mats.Length; i++) mats[i] = Faded(mats[i], alwaysFadedAlpha, _permanentCopies);
+                r.sharedMaterials = mats;
+                _permanent.Add(r);
+            }
+        }
 
         void LateUpdate()
         {
             var g = Game.I;
             if (g == null || fadeTemplate == null) return;
+            if (g.Current != _fadedArea) FadePermanent(g.Current);
             _hitThisFrame.Clear();
             Probe(g.Player.transform.position);
             var follow = g.Player.GetComponent<PlayerController>().Following;
@@ -68,26 +93,30 @@ namespace Hitman
             {
                 var col = _hits[i].collider;
                 if (col.GetComponentInParent<CharacterMover>() != null) continue;
+                // Doors (and anything else you can use) never fade: they have to stay visible and tappable.
+                if (col.GetComponentInParent<Usable>() != null) continue;
                 // Tall things (walls, buildings) and anything overhead (the elevated subway, fire escapes).
                 if (col.bounds.size.y < minHeight && col.bounds.min.y < OverheadHeight) continue;
-                foreach (var r in col.GetComponents<Renderer>()) _hitThisFrame.Add(r);
+                foreach (var r in col.GetComponents<Renderer>()) if (!_permanent.Contains(r)) _hitThisFrame.Add(r);
             }
         }
 
-        Material Faded(Material original)
+        Material Faded(Material original) => Faded(original, fadedAlpha, _fadedCopies);
+
+        Material Faded(Material original, float alpha, Dictionary<Material, Material> cache)
         {
             if (original == null) return null;
-            if (_fadedCopies.TryGetValue(original, out var m)) return m;
+            if (cache.TryGetValue(original, out var m)) return m;
             m = new Material(fadeTemplate) { name = original.name + " (faded)" };
             var c = original.HasProperty("_BaseColor") ? original.GetColor("_BaseColor") : original.color;
-            c.a = fadedAlpha;
+            c.a = alpha;
             m.SetColor("_BaseColor", c);
             if (original.HasProperty("_BaseMap"))
             {
                 m.SetTexture("_BaseMap", original.GetTexture("_BaseMap"));
                 m.SetTextureScale("_BaseMap", original.GetTextureScale("_BaseMap"));
             }
-            _fadedCopies[original] = m;
+            cache[original] = m;
             return m;
         }
     }

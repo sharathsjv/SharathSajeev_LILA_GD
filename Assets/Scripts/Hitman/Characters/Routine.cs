@@ -16,6 +16,10 @@ namespace Hitman
         [TextArea(1, 3)] public string info;
         public string address;
         public string phone;
+        [Tooltip("Pose they hold when standing about (AnimLibrary name, e.g. \"Drunk Idle\"). Empty = breathing idle.")]
+        public string standPose;
+        [Tooltip("Walk cycle (AnimLibrary name, e.g. \"Walking With Shopping Bag\"). Empty = normal walk.")]
+        public string walk;
         [Tooltip("Steps in time order. Before the first step of the day, they're wherever the last step left them.")]
         public RoutineStep[] steps;
     }
@@ -30,8 +34,18 @@ namespace Hitman
         public Activity activity;
         [Tooltip("Optional: pick one of these per day instead (weights don't need to add up to 1).")]
         public RoutineOption[] options;
+        [Tooltip("Pose held during this step (AnimLibrary name, e.g. \"Drinking\"). Empty = picked from the activity.")]
+        public string pose;
         [Tooltip("Designer note, not shown in game.")]
         [TextArea(1, 2)] public string note;
+        [Tooltip("What the player writes down when they watch this step and tap Document (empty = can't be documented).")]
+        [TextArea(1, 3)] public string documented;
+        [Tooltip("Elimination situation number from the design doc (1-5), 0 = none. Documented openings are highlighted in the notebook.")]
+        public int opening;
+        [Tooltip("What they say during this step, overheard when the player is close enough.")]
+        public string[] chatter;
+        [Tooltip("Noted in the notebook when the player overhears this step's chatter (empty = nothing to note).")]
+        [TextArea(1, 2)] public string overheard;
 
         public float Minutes
         {

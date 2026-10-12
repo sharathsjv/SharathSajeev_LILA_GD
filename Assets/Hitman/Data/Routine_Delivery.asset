@@ -1,0 +1,52 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 522c4969fe6b3dd4a86edb902e404ef4, type: 3}
+  m_Name: Routine_Delivery
+  m_EditorClassIdentifier: Assembly-CSharp::Hitman.Routine
+  displayName: Delivery guy
+  photo: {fileID: 0}
+  info: Kensington Takeout.
+  address: 
+  phone: 
+  standPose: Texting While Standing
+  walk: Walking With Shopping Bag
+  steps:
+  - time: 00:00
+    place: suburbs.shops.back
+    activity: 7
+    options: []
+    pose: 
+    note: At the takeout.
+    documented: 
+    opening: 0
+    chatter: []
+    overheard: 
+  - time: 19:00
+    place: suburbs.house4.porch
+    activity: 0
+    options: []
+    pose: 
+    note: Kevin's chili, every night.
+    documented: 
+    opening: 0
+    chatter: []
+    overheard: 
+  - time: 19:25
+    place: suburbs.shops.back
+    activity: 7
+    options: []
+    pose: 
+    note: Back to the takeout.
+    documented: 
+    opening: 0
+    chatter: []
+    overheard: 

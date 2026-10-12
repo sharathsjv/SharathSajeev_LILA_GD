@@ -30,16 +30,95 @@ namespace Hitman
         float _repath;
         bool _ridingWithTarget;
 
-        public event Action<Usable, UseAction> CustomAction;   // hook for kill methods etc.
+        public event Action<Usable, UseAction> CustomAction;
+
+        // A one-off move for the player (pick up, put down, open...).
+        public void Act(string clip) => _mover.PlayAction(clip);   // hook for kill methods etc.
 
         void Awake() => _mover = GetComponent<CharacterMover>();
+
+        void Start() => Game.I.Restored += () => { Locked = false; EndBlend(); };
+
+        // Control taken away (being walked out by security).
+        public bool Locked { get; private set; }
+        // Doing something that fits in where they are (typing at a desk, getting coffee): restricted areas leave
+        // them alone while they're at it. Cleared as soon as they walk off.
+        public BlendSpot Blending { get; private set; }
 
         void Update()
         {
             var g = Game.I;
             if (g == null) return;
-            HandlePointer(g);
+            if (!Locked && !Suspicion.Spotting) HandlePointer(g);
             UpdateFollow(g);
+            if (Blending != null && (_mover.Moving || (transform.position - Blending.Stand.position).sqrMagnitude > 1f)) EndBlend();
+        }
+
+        public void Blend(BlendSpot spot)
+        {
+            Blending = spot;
+            _mover.Seated = spot.Sit;
+            if (!string.IsNullOrEmpty(spot.Pose)) _mover.SetPose(spot.Pose);
+        }
+
+        public void EndBlend()
+        {
+            if (Blending == null) return;
+            Blending = null;
+            _mover.Seated = false;
+            _mover.ClearPose();
+        }
+
+        // Taken by the arm: walk to a spot whatever the player taps, then carry on.
+        public void Escort(Vector3 to, Action then)
+        {
+            if (Following != null) StopFollow();
+            EndBlend();
+            Locked = true;
+            Game.I.UI.HideActions();
+            _mover.WalkTo(to, () => { Locked = false; then?.Invoke(); });
+        }
+
+        // Walk over, then do something (actions from IActionSources).
+        public void GoThen(Transform at, bool exact, Action act, bool sit = false)
+        {
+            if (Following != null) StopFollow();
+            EndBlend();
+            var target = at.position;
+            if (!exact)
+            {
+                // Stand just in front of it, on the near side.
+                var toMe = transform.position - at.position;
+                toMe.y = 0;
+                var col = at.GetComponentInChildren<Collider>();
+                float r = col != null ? Mathf.Max(col.bounds.extents.x, col.bounds.extents.z) : 0.3f;
+                if (toMe.sqrMagnitude > 0.01f) target = at.position + toMe.normalized * Mathf.Min(r + 0.5f, toMe.magnitude);
+            }
+            _mover.WalkTo(target, () =>
+            {
+                if (exact) transform.rotation = at.rotation;
+                else _mover.Face(at.position);
+                _mover.Seated = sit;
+                act?.Invoke();
+            });
+        }
+
+        void Document(RoutineCharacter who)
+        {
+            var step = who.Step;
+            var r = who.Routine;
+            Game.I.Note($"routine.{r.name}.{who.StepIndex}", $"{step.time} - {step.documented}", NoteKind.Routine, step.opening);
+        }
+
+        // Some static actions only make sense sometimes.
+        static bool Hidden(UseAction a)
+        {
+            var g = Game.I;
+            switch (a.id)
+            {
+                case "stock": return !g.S.Holding("food");
+                default: return false;
+            }
         }
 
         // ---------- Input ----------
@@ -92,6 +171,10 @@ namespace Hitman
             for (int i = 0; i < n; i++)
             {
                 var c = _tapHits[i].collider;
+                if (c.transform.IsChildOf(transform)) continue;                 // (yourself: tap what's behind you)
+                // A door is always what you meant, even if the wall around it has faded.
+                if (c.GetComponentInParent<Usable>() is Usable u0 && u0.Actions != null && Array.Exists(u0.Actions, x => x.id == "enter" || x.id == "exit" || x.id == "link")
+                    && (!c.TryGetComponent<Renderer>(out var dr) || dr.enabled)) { pick = i; break; }
                 // Skip see-through buildings and anything in a room that's hidden right now.
                 if (OcclusionFader.IsFaded(c) || c.bounds.min.y > OcclusionFader.OverheadHeight ||
                     (c.TryGetComponent<Renderer>(out var r) && !r.enabled && c.GetComponentInParent<RoutineCharacter>() == null)) continue;
@@ -104,23 +187,35 @@ namespace Hitman
             var person = hit.collider.GetComponentInParent<RoutineCharacter>();
             if (person != null && person.Visible)
             {
-                var acts = new List<(string, Action)>();
-                if (Following != person) acts.Add(($"Follow {person.Routine.displayName}", () => StartFollow(person)));
-                else acts.Add(("Stop following", StopFollow));
-                g.UI.ShowActions(person.Routine.displayName, acts, pos);
+                var menu = new ActionMenu(this, person.transform, person.Routine.displayName);
+                if (person.Alive)
+                {
+                    if (Following != person) menu.Add($"Follow {person.Routine.displayName}", () => StartFollow(person));
+                    else menu.Add("Stop following", StopFollow);
+                    var step = person.Step;
+                    if (step != null && !string.IsNullOrEmpty(step.documented) && person.Settled)
+                        menu.Add("Document what they're doing", () => Document(person));
+                }
+                foreach (var src in person.GetComponents<IActionSource>()) src.AddActions(menu);
+                g.UI.ShowActions(menu.Title, menu.Items, pos);
                 return;
             }
 
             var usable = hit.collider.GetComponentInParent<Usable>();
-            if (usable != null)
+            var sources = hit.collider.GetComponentsInParent<IActionSource>();
+            if (usable != null || sources.Length > 0)
             {
-                var acts = new List<(string, Action)>();
-                foreach (var a in usable.Actions)
-                {
-                    var action = a;
-                    acts.Add((a.label, () => GoUse(usable, action)));
-                }
-                g.UI.ShowActions(usable.Title, acts, pos);
+                var menu = new ActionMenu(this, usable != null ? usable.transform : ((Component)sources[0]).transform,
+                                          usable != null ? usable.Title : Pretty(((Component)sources[0]).name));
+                if (usable != null)
+                    foreach (var a in usable.Actions)
+                    {
+                        var action = a;
+                        if (Hidden(action)) continue;
+                        menu.Items.Add((a.label, () => GoUse(usable, action)));
+                    }
+                foreach (var src in sources) src.AddActions(menu);
+                if (menu.Items.Count > 0) g.UI.ShowActions(menu.Title, menu.Items, pos);
                 return;
             }
 
@@ -146,7 +241,17 @@ namespace Hitman
             }
 
             if (Following != null) StopFollow();
+            EndBlend();
             _mover.WalkTo(hit.point);
+        }
+
+        // "Off_MopBucket" -> "Mop Bucket", "Bar_Stool2" -> "Stool".
+        static string Pretty(string name)
+        {
+            int u = name.IndexOf('_');
+            if (u >= 0 && u <= 4) name = name.Substring(u + 1);
+            name = System.Text.RegularExpressions.Regex.Replace(name, @"\d+$|[_]", " ").Trim();
+            return System.Text.RegularExpressions.Regex.Replace(name, @"(?<=[a-z])(?=[A-Z])", " ");
         }
 
         static bool IsBuilding(Collider c) =>
@@ -165,6 +270,7 @@ namespace Hitman
         void GoUse(Usable u, UseAction a)
         {
             if (Following != null) StopFollow();
+            EndBlend();
             var spot = u.StandPoint != null ? u.StandPoint : u.transform;
             _mover.WalkTo(spot.position, () =>
             {
@@ -190,15 +296,27 @@ namespace Hitman
             var g = Game.I;
             switch (a.id)
             {
-                case "laptop": g.UI.ShowEmail(); break;
+                case "laptop": g.UI.ShowComputer(); break;
                 case "notepad": g.UI.ShowNotepad(); break;
-                case "eat": g.Eat(string.IsNullOrEmpty(a.arg) ? "something" : a.arg); break;
+                case "eat": Actions.Eat(a.arg); break;
+                case "stock": Actions.StockFridge(); break;
+                case "meal": Actions.Meal(a.arg); break;
+                case "search": g.UI.ShowSearch(); break;
+                case "loiter": _mover.SetPose("Sitting"); Actions.Loiter(u); break;
+                case "payphone": _mover.SetPose("Talking On Phone"); g.UI.ShowPhone(u.GetComponent<Payphone>()); break;
+                case "buy": _mover.PlayAction(a.arg == "coffee" ? "Taking Item" : "Picking Up Object"); Actions.Buy(a.arg); break;
+                case "take": _mover.PlayAction("Picking Up Object"); Shop.TakeFromShelf(a.arg); break;
+                case "pay": Shop.PayAtTill(); break;
+                case "blend": { var b = u.GetComponent<BlendSpot>(); if (b != null) Blend(b); break; }
+                case "barber": g.UI.ShowBarber(); break;
+                case "suit": Actions.BuySuit(int.TryParse(a.arg, out var price) ? price : 12); break;
                 case "sleep": g.Sleep(); break;
                 case "subway": g.UI.ShowTravel(true); break;
                 case "taxi": g.UI.ShowTravel(false); break;
-                case "enter": g.UseDoor(g.Area(a.arg) as Interior, true); break;
-                case "exit": g.UseDoor(g.Current as Interior, false); break;
+                case "enter": if (Restricted.MayEnter(g.Area(a.arg) as Interior)) g.UseDoor(g.Area(a.arg) as Interior, true); break;
+                case "exit": if (Shop.CanLeave()) g.UseDoor(g.Current as Interior, false); break;
                 case "link": g.UseLink(g.Current as Interior, g.Area(a.arg) as Interior); break;
+                case "wardrobe": g.UI.ShowWardrobe(Wardrobe.Nearest(u.transform.position)); break;
                 default: CustomAction?.Invoke(u, a); break;
             }
         }

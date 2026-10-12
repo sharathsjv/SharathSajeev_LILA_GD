@@ -44,6 +44,15 @@ namespace Hitman
         [SerializeField] float hazeDensity = 0.03f;
         [Tooltip("Sky light on characters relative to the scenery (keeps them from looking lit-up against the street).")]
         [SerializeField, Range(0, 1.5f)] float characterSky = 0.75f;
+        [Tooltip("How much of the sun's colour reaches characters (0 = plain white light, 1 = the full sunrise " +
+                 "orange). Scenery always gets the full colour; skin and clothes look wrong in deep orange light.")]
+        [SerializeField, Range(0, 1)] float characterSunColour = 0.3f;
+        [Tooltip("Sun brightness on characters relative to the scenery.")]
+        [SerializeField, Range(0, 1.5f)] float characterSunIntensity = 0.85f;
+        [Tooltip("Overall strength of the golden-hour colour grade (it tints the whole screen, characters included).")]
+        [SerializeField, Range(0, 1)] float goldenGradeStrength = 0.45f;
+        [Tooltip("How much of the sky's colour reaches characters' ambient light (the brightness stays).")]
+        [SerializeField, Range(0, 1)] float characterSkyColour = 0.35f;
         [SerializeField] float sunriseHour = 6.8f;
         [SerializeField] float sunsetHour = 19.8f;
         [Tooltip("Keyframes by hour; the day starts at 07:00 at golden-hour sunrise and runs past midnight.")]
@@ -69,6 +78,7 @@ namespace Hitman
 
         static readonly int SkyId = Shader.PropertyToID("_HitmanSky");
         static readonly int LampsId = Shader.PropertyToID("_HitmanLamps");
+        static readonly int SunId = Shader.PropertyToID("_HitmanSun");
         static readonly int SkyMapId = Shader.PropertyToID("_SkyLightmap");
 
         public float Lamps { get; private set; }
@@ -125,9 +135,20 @@ namespace Hitman
                 sun.transform.rotation = Quaternion.Euler(k.sunElevation, 270f + 180f * t, 0);   // east -> south -> west
             }
             else sun.transform.rotation = Quaternion.Euler(55f, 320f, 0);                         // moon / grey sky
-            sun.color = k.sunColor;
-            sun.intensity = k.sunIntensity;
+            // Scenery gets the full sun colour through the shader; the real light (which is what lights the
+            // characters) keeps only some of it, so people aren't painted orange at sunrise and sunset.
+            Shader.SetGlobalColor(SunId, k.sunColor * k.sunIntensity);
+            sun.color = Desaturate(k.sunColor, characterSunColour);
+            sun.intensity = k.sunIntensity * characterSunIntensity;
 
+            // Some areas are lifted at night (gameplay readability); the lift fades in with the night grade.
+            var area = g.Current;
+            if (area != null && k.night > 0)
+            {
+                // (a copy: Evaluate can hand back the stored keyframe itself)
+                k = new Key(k.hour, k.sunElevation, k.sunColor, k.sunIntensity, k.sky * Mathf.Lerp(1f, area.NightSky, k.night),
+                            k.lamps * Mathf.Lerp(1f, area.NightLamps, k.night), k.night, k.golden, k.haze);
+            }
             RenderSettings.ambientMode = AmbientMode.Flat;
             RenderSettings.ambientLight = k.sky;
             Shader.SetGlobalColor(SkyId, k.sky * bakedSkyBoost);
@@ -135,14 +156,14 @@ namespace Hitman
             Shader.SetGlobalFloat(LampsId, Lamps);
             if (dayGrade != null) dayGrade.weight = g.Current != null ? g.Current.NoirStrength : 1f;
             if (nightGrade != null) nightGrade.weight = k.night;
-            if (goldenGrade != null) goldenGrade.weight = k.golden;
+            if (goldenGrade != null) goldenGrade.weight = k.golden * goldenGradeStrength;
             if (_lampProbes != null && Time.unscaledTime >= _nextProbeUpdate)
             {
                 _nextProbeUpdate = Time.unscaledTime + 0.25f;
                 for (int i = 0; i < _lampProbes.Length; i++)
                 {
                     var sh = _lampProbes[i] * (Lamps * Lamps);      // lamps only really count once it's dark
-                    sh.AddAmbientLight(k.sky * characterSky);
+                    sh.AddAmbientLight(Desaturate(k.sky, characterSkyColour) * characterSky);
                     _probes[i] = sh;
                 }
                 LightmapSettings.lightProbes.bakedProbes = _probes;
@@ -150,11 +171,21 @@ namespace Hitman
 
             // Haze: fog and background towards a mix of sky and sun colour (amber at golden hour, blue at night).
             var haze = Color.Lerp(k.sky, k.sunColor * Mathf.Clamp01(k.sunIntensity), 0.45f);
-            RenderSettings.fog = k.haze > 0.01f;
+            RenderSettings.fog = k.haze > 0.01f && !(g.Current is Interior);     // haze is for the streets: none indoors
             RenderSettings.fogMode = FogMode.ExponentialSquared;
             RenderSettings.fogColor = haze;
             RenderSettings.fogDensity = hazeDensity * k.haze;
             if (cam != null) cam.backgroundColor = haze * 0.6f;
+        }
+
+        // Keep the brightness, keep only `keep` of the colour.
+        static Color Desaturate(Color c, float keep)
+        {
+            float l = 0.299f * c.r + 0.587f * c.g + 0.114f * c.b;
+            var grey = new Color(l, l, l, c.a);
+            // a hint of warmth even when fully grey, so it isn't clinical
+            grey = new Color(grey.r * 1.04f, grey.g * 1.0f, grey.b * 0.95f, c.a);
+            return Color.Lerp(grey, c, keep);
         }
 
         Key Evaluate(float h)
