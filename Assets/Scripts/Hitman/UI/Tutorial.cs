@@ -26,6 +26,7 @@ namespace Hitman
         public void Init(RectTransform root)
         {
             _root = root;
+            Running = false;                                             // (a restarted game)
             // explanations: dim everything and wait for OK
             _blocker = UIKit.Box(_root, "Tutorial Blocker", new Color(0, 0, 0, 0.25f), false).rectTransform.Stretch();
             _blocker.gameObject.SetActive(false);
@@ -120,6 +121,14 @@ namespace Hitman
             ui.Overlays.FlashHungry = false;
             ui.Overlays.CloseWatch();
 
+            // ...and on you: growling stomach, sleepy Z!
+            ui.Marks.ShowHungry = true;
+            yield return Explain("You can see it on you too: when you're hungry, your stomach growls - lines ripple out from it.", g.Player.transform);
+            ui.Marks.ShowHungry = false;
+            ui.Marks.ShowSleepy = true;
+            yield return Explain("And when you're getting sleepy, a <b>Z!</b> floats over your head. Get to a bed at night - stay up too late and you'll pass out wherever you are.", g.Player.transform);
+            ui.Marks.ShowSleepy = false;
+
             // Things you can touch.
             var fridge = Find("Kit_Fridge");
             while (g.Hunger > 0.3f)
@@ -133,6 +142,7 @@ namespace Hitman
                 while (g.Busy) yield return null;
                 yield return new WaitForSeconds(0.5f);
             }
+            yield return Explain("Tip: not sure what you can use? Open the pause menu and turn on <b>Interaction icons</b> - a tiny marker shows over everything you can interact with.", null);
 
             // The computer.
             yield return Instruct("Now head back to the hall.", () => Room() == "Liv");
@@ -147,6 +157,22 @@ namespace Hitman
             // Out the door.
             yield return Instruct("Touch the door to head out.", () => g.Current != _home, world: Find("Liv_EntranceDoor"));
             while (g.Busy) yield return null;
+
+            // Crossing the street.
+            var street = g.Current;
+            if (street is District && street.StreetHalfWidth > 0)
+            {
+                float Side() => Mathf.Sign(street.transform.InverseTransformPoint(g.Player.transform.position).x - street.StreetCenterX);
+                float side = Side();
+                var mark = new GameObject("Tutorial Road Mark").transform;
+                var local = street.transform.InverseTransformPoint(g.Player.transform.position);
+                local.x = street.StreetCenterX;
+                mark.position = street.transform.TransformPoint(local);
+                yield return Explain("This is the street. Shops, people, the subway - and the other side of the road.\nTo get across, tap the road and pick <b>Cross street</b>.", null);
+                yield return Instruct("Cross the street: tap the road, then Cross street.", () => Side() != side && !g.Player.Moving, world: mark);
+                Destroy(mark.gameObject);
+                yield return new WaitForSeconds(0.5f);
+            }
             yield return Card();
             Finish();
         }
@@ -266,8 +292,8 @@ namespace Hitman
             var page = Sunken(UIKit.Rect(win, "Page"));
             page.Stretch(16, 96, 16, 62);
             UIKit.Box(page, "White", Color.white, false).rectTransform.Stretch(3, 3, 3, 3);
-            var t = Text98(page, "", 30, TextAnchor.UpperLeft);
-            t.rectTransform.Stretch(28, 24, 28, 24);
+            var t = Text98(page, "", 28, TextAnchor.UpperLeft);
+            t.rectTransform.Stretch(28, 20, 28, 20);
             t.name = "Text";
             var go = Button98(win, "Let's go", () => _clicked = true, 28);
             var gr = (RectTransform)go.transform;
@@ -288,6 +314,8 @@ namespace Hitman
                 "<b>1. Find information.</b> Where they go, what they do, who they see. Everyone in this city keeps a routine: watch, listen, read, and write it down.\n\n" +
                 "<b>2. Eliminate the target.</b> You have no weapons. The city is your weapon - a wet floor, a bad meal, a gas tap. How you do it is up to you.\n\n" +
                 "<b>3. Report it.</b> An anonymous call to the police from a payphone gets it in the papers - and gets you paid.\n\n" +
+                "<b>Following.</b> Tap someone and pick <i>Follow</i> to tail them - you'll walk behind them through doors and onto the subway. " +
+                "Slide toward or away from them to change the gap; tap the floor or <i>Stop</i> to quit. Tailing someone won't get you past security or a locked door.\n\n" +
                 "The world is yours to use. Your to-do list is in the notebook.";
             _card.gameObject.SetActive(true);
             _card.SetAsLastSibling();
@@ -310,6 +338,7 @@ namespace Hitman
             Game.I.S.Set("tutorial.done");
             Game.I.Cam.Spotlight(null, null);
             if (Game.I.UI.Overlays != null) Game.I.UI.Overlays.FlashHungry = false;
+            if (Game.I.UI.Marks != null) Game.I.UI.Marks.ShowHungry = Game.I.UI.Marks.ShowSleepy = false;
             _box.gameObject.SetActive(false);
             _blocker.gameObject.SetActive(false);
             _arrow.gameObject.SetActive(false);

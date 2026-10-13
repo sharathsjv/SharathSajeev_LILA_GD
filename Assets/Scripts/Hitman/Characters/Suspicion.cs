@@ -34,7 +34,7 @@ namespace Hitman
         bool _throwing;
 
         public static Suspicion I { get; private set; }
-        void Awake() => I = this;
+        void Awake() { I = this; Spotting = LastChance = false; }      // (statics: reset when the game restarts)
         void Start() => Game.I.Restored += () => { _throwing = false; _noticed.Clear(); _checked = Game.I.Current; LastChance = false; Game.I.Player.Unscaled = false; };
 
         public int CopsAtInfamy => copsAtInfamy;
@@ -53,6 +53,8 @@ namespace Hitman
             if (player.Locked) return;
             var pos = player.transform.position;
             var r = Restricted.Of(g.Current);
+            // Hired at the paper company: its floor is your office now.
+            if (r != null && r.Type == Restricted.Kind.StaffOnly && g.S.Has("office.hired") && g.Current.Id == "business.tower1.floor5") r = null;
 
             // Security desk: checked once each time you come in.
             if (g.Current != _checked)
@@ -74,7 +76,7 @@ namespace Hitman
             }
 
             // Caught in someone's home.
-            if (r != null && r.Type == Restricted.Kind.Private && r.Owner != null)
+            if (r != null && r.Type == Restricted.Kind.Private && r.Owner != null && !(g.S.Has("kevin.friend") && Contract.I != null && r.Owner == Contract.I.Target))
             {
                 var ow = Watcher.Of(r.Owner);
                 if (ow != null && ow.CanSee(pos, 7f)) { Spot(ow, () => g.Fail($"{ow.DisplayName} caught you in his house and called the cops.")); return; }
@@ -212,12 +214,42 @@ namespace Hitman
 
         // ---------- Security desk ----------
 
+        // Past the security desk: a keycard, hired, a suit, or today's interview pass.
+        public bool Cleared(Restricted r)
+        {
+            if (r == null || r.Type != Restricted.Kind.Security) return true;
+            var g = Game.I;
+            return g.S.Holding("keycard") || g.S.Has("office.hired") || (g.Look != null && g.Look.WearingSuit) || g.S.Has($"pass.{g.Day}");
+        }
+
+        // Following someone further in: not past a security desk you haven't cleared (the guard walks you out), not
+        // through a locked front door.
+        public bool MayFollow(Area from, Area to)
+        {
+            var g = Game.I;
+            var r = Restricted.Of(from);
+            if (to is Interior up && up.Parent == from && r != null && r.Type == Restricted.Kind.Security && !Cleared(r))
+            {
+                g.UI.Say(r.Guard != null ? r.Guard.transform : null, "Hey! Not without a pass, pal. Out.");
+                if (r.Guard != null) r.Guard.GetComponent<CharacterMover>()?.PlayAction("Angry Point");
+                var pc = g.Player.GetComponent<PlayerController>();
+                if (pc.Following != null) pc.StopFollow();   // (before the escort starts: stopping halts the walk)
+                ThrowOut(r.Interior);
+                return false;
+            }
+            if (to is Interior into && into.Parent == null && into.Map == from && !Restricted.MayEnter(into)) return false;
+            return true;
+        }
+
         void SecurityCheck(Restricted r)
         {
             var g = Game.I;
             var look = g.Look;
             var guard = r.Guard;
+            // Tailing someone in doesn't get you past the desk: the guard stops you here.
+            if (!Cleared(r)) { var pc = g.Player.GetComponent<PlayerController>(); if (pc.Following != null) pc.StopFollow(); }
             if (g.S.Holding("keycard")) { g.UI.Say(guard ? guard.transform : null, "Morning."); return; }
+            if (g.S.Has("office.hired")) { g.UI.Say(guard ? guard.transform : null, "Morning. Fifth floor - you're one of them now."); return; }
             if (look != null && look.WearingSuit) { g.UI.Say(guard ? guard.transform : null, "Morning, sir."); return; }
             if (g.S.Has($"pass.{g.Day}")) { g.UI.Say(guard ? guard.transform : null, "Fifth floor, like I said."); return; }
 

@@ -364,17 +364,39 @@ def floor5():
 
 # ================================================================ Kevin's house: ground floor (11 x 8)
 
+def sash_window(sash_name, frame_name, x0, x1, y, sill, top):
+    """A sash window in a wall along X at Y = y: frame, sill and the fixed upper sash in one object; the lower sash
+    (sash_name) on its own so it can slide up; a garden view outside."""
+    mid = (sill + top) / 2
+    F = Builder(frame_name, ((x0 + x1) / 2, y, 0))
+    F.box(x0 - 0.06, x0, y - 0.12, y + 0.12, sill, top, "MetalWhite").box(x1, x1 + 0.06, y - 0.12, y + 0.12, sill, top, "MetalWhite")
+    F.box(x0 - 0.06, x1 + 0.06, y - 0.12, y + 0.12, top, top + 0.07, "MetalWhite")
+    F.box(x0 - 0.1, x1 + 0.1, y - 0.2, y + 0.12, sill - 0.05, sill, "MetalWhite")                 # sill
+    F.box(x0, x1, y + 0.04, y + 0.07, mid, top, "GlassOffice")                                      # upper sash
+    F.box(x0, x1, y + 0.03, y + 0.08, mid - 0.03, mid + 0.03, "MetalWhite")
+    F.box((x0 + x1) / 2 - 0.02, (x0 + x1) / 2 + 0.02, y + 0.03, y + 0.08, mid, top, "MetalWhite")
+    F.done()
+    S = Builder(sash_name, ((x0 + x1) / 2, y, 0))
+    S.box(x0 + 0.01, x1 - 0.01, y - 0.04, y - 0.01, sill + 0.03, mid, "GlassOffice")               # lower sash
+    for z0, z1 in ((sill, sill + 0.06), (mid - 0.04, mid + 0.01)):
+        S.box(x0, x1, y - 0.05, y, z0, z1, "MetalWhite")
+    for a in (x0, x1 - 0.04, (x0 + x1) / 2 - 0.02):
+        S.box(a, a + 0.04, y - 0.05, y, sill, mid, "MetalWhite")
+    S.done()
+    single("NoCol_View_" + sash_name, (x0 - 0.1, x1 + 0.1, y + 0.3, y + 0.34, sill - 0.05, top, "LeavesBright"))  # (kept below the wall top)
+
 def house_ground():
     reset(53)
     W, D, H = 5.5, 4.0, 2.8
     floor("House_Floor", -W, W, -D, 0.4, "WoodOak", 1.0)
     floor("House_FloorKitchen", -W, W, 0.4, D, "TileKitchen", 0.6)
-    wall("House_WallN", "x", D, -W, W, H, "PaintBlush", [(0.6, 1.5, 0, 2.1), (-4.6, -3.4, 1.0, 2.1), (2.2, 3.2, 1.0, 2.1)], glass="WinPunch")
+    # one window, on the back wall where it can be seen and reached (the stove kill needs it shut): a sash window.
+    # House_Window1 is the lower sash, which the game slides up to open it; the garden shows through the gap.
+    wall("House_WallN", "x", D, -W, W, H, "PaintBlush", [(0.6, 1.5, 0, 2.1), (2.2, 3.2, 1.0, 2.1)])
     wall("House_WallE", "y", W, -D, D, H, "PaintBlush")
     wall("House_WallS", "x", -D, -W, W, H, "PaintBlush", [(0.4, 1.4, 0, 2.1)], low=True)
     wall("House_WallW", "y", -W, -D, D, H, "PaintBlush", low=True)
-    for k, (x0, x1) in enumerate(((-4.6, -3.4), (2.2, 3.2))):
-        single(f"House_Window{k}", (x0, x1, D - 0.04, D + 0.04, 1.0, 2.1, "WinPunch"))
+    sash_window("House_Window1", "House_WindowFrame1", 2.2, 3.2, D, 1.0, 2.1)
     single("House_BackDoor", (0.6, 1.5, D - 0.05, D + 0.05, 0, 2.1, "DoorGreen"))
     door = Builder("House_Door", (0.9, -D, 0))
     door.box(0.4, 1.4, -D - 0.05, -D + 0.05, 0, 2.1, "DoorGreen")

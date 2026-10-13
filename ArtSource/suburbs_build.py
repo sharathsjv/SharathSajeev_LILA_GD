@@ -17,7 +17,8 @@ JUNCTION_Y = 13.5            # where the side street meets the main road's sidew
 # ---------------------------------------------------------------- ground
 
 single("Gnd_Lawns", (-21.5, 21.5, -29, 29, -0.08, -0.01, "GrassLush", 1.5))
-hills("Gnd_Hills", (-21.5, 21.5, -29, 29), (-72, 72, -84, 84), 18.0)
+hills("Gnd_Hills", (-48, 48, -50, 29), (-90, 90, -100, 84), 18.0)
+single("Ext_Lawns", (-50, 50, -52, 29, -0.12, -0.03, "GrassLush", 1.5))      # past the barricades: more of the same
 single("Gnd_MainRoad", (-21.5, 21.5, 17, 21, -0.05, 0.0, "AsphaltClean", 2.0))
 single("Gnd_SideRoad", (-1.5, 1.5, -28, 17, -0.05, 0.0, "AsphaltClean", 2.0))
 single("Gnd_MainSidewalkW", (-21.5, -1.5, 13.5, 17, -0.05, 0.004, "ConcreteClean", 2.0))   # split where the
@@ -44,14 +45,18 @@ paint.done()
 
 # ---------------------------------------------------------------- houses (front doors face the side street)
 
+# Houses 7 and 8 at the south end (doc map: four rows of two); Kevin lives in 8 now.
+LAYOUT["House 7"] = {"min": [-14.5, 0, -27.0], "max": [-5.5, 4, -20.0]}
+LAYOUT["House 8 (Kevin)"] = {"min": [5.5, 0, -27.0], "max": [14.5, 4, -20.0]}
 houses = [("House1", "House 1", +1, "StuccoCream", "RoofBrown"), ("House2", "House 2", -1, "StuccoWhite", "RoofRed"),
           ("House3", "House 3", +1, "StuccoPeach", "RoofBrown"), ("House4", "House 4 (Kevin)", -1, "StuccoCream", "RoofBrown"),
-          ("House5", "House 5", +1, "StuccoWhite", "RoofBrown"), ("House6", "House 6", -1, "StuccoPeach", "RoofRed")]
-kevin_door = LAYOUT["Door (House 4 (Kevin))"]["pos"][2]
+          ("House5", "House 5", +1, "StuccoWhite", "RoofBrown"), ("House6", "House 6", -1, "StuccoPeach", "RoofRed"),
+          ("House7", "House 7", +1, "StuccoCream", "RoofRed"), ("House8", "House 8 (Kevin)", -1, "StuccoCream", "RoofBrown")]
+kevin_door = -22.7
 for key, src_name, street, walls, roof in houses:
     src = LAYOUT[src_name]
     y0, y1 = src["min"][2], src["max"][2]
-    door = kevin_door if key == "House4" else (y0 + y1) / 2 + 0.8
+    door = kevin_door if key == "House8" else (y0 + y1) / 2 + 0.8
     _, gar = house2(key, src, street, walls, roof, door=door)
     face_x = src["max"][0] if street > 0 else src["min"][0]
     door_obj(key, face_x, street, door, kind="DoorGreen")
@@ -80,8 +85,7 @@ pool("Prop_PoolHouse1", -19.0, -16.0, 7.5, 11.0)
 pool("Prop_PoolHouse6", 16.0, 19.0, -14.0, -10.5)
 k = 0
 for (x, y) in [(-17.5, -0.5), (18.0, -1.0), (-18.0, -12.0), (17.5, 10.0), (-20.0, 4.0), (20.0, 4.5), (-20.5, -6.5),
-               (20.0, -7.0), (-7.0, -23.5), (8.0, -23.0), (-15.5, -24.5), (15.0, -24.0), (19.5, 25.5), (-19.5, 25.0),
-               (-12.0, -26.5), (12.0, -26.5)]:
+               (20.0, -7.0), (-18.5, -18.5), (18.5, -18.5), (-19.0, -25.0), (19.0, -25.0), (19.5, 25.5), (-19.5, 25.0)]:
     k += 1
     if k % 2: pine(f"Prop_Tree{k:02d}", x, y, h=rng.uniform(6.5, 9.0))
     else: round_tree(f"Prop_Tree{k:02d}", x, y, h=rng.uniform(5.0, 6.5), r=rng.uniform(1.5, 2.0),
@@ -98,8 +102,8 @@ B.done()
 
 building("Groceries", LAYOUT["Shops (Groceries)"], 1, "BrickClean", "S", shop={"sign": "SignMarket", "awning": "Awning"},
          door=LAYOUT["Door (Shops (Groceries))"]["pos"][0], clean=True)
-building("Shop2", LAYOUT["Shop 2"], 1, "StuccoCream", "S", shop={"sign": "SignLaundry", "awning": "AwningRed"}, clean=True)
-building("Shop3", LAYOUT["Shop 3"], 1, "StuccoWhite", "S", shop={"sign": "SignHardware", "awning": "Awning"}, clean=True)
+# the upkept brownstones (doc reference), set back so their stoops fit in front
+brownstone_row("Upkeep", {"min": [-0.5, 0, 23.3], "max": [18.0, 0, 27.5]}, "S", floors=3, stoop=1.75)
 door_obj("Groceries", 21.5, -1, LAYOUT["Door (Shops (Groceries))"]["pos"][0], axis="y")
 
 # ---------------------------------------------------------------- street furniture
@@ -127,5 +131,29 @@ for i, (x, y) in enumerate([(-1.85, -10.0), (12.0, 16.2)]):
 pp = Builder("Payphone_1", (-8.0, 14.0, 0))
 pp.box(-8.3, -7.7, 13.75, 14.15, 0.6, 2.0, "Payphone").box(-8.35, -7.65, 13.75, 13.9, 0, 2.2, "Steel").done()
 bench("Prop_Bench0", -12.0, 14.0, along_y=False)
+
+# past the barricades: the roads go on, more houses and gardens
+for (xa, xb) in ((-48, -21.5), (21.5, 48)):
+    single(f"Ext_MainRoad{xa:.0f}", (xa, xb, 17, 21, -0.05, 0.0, "AsphaltClean", 2.0))
+    single(f"Ext_MainWalk{xa:.0f}", (xa, xb, 13.5, 17, -0.05, 0.004, "ConcreteClean", 2.0))
+    single(f"Ext_MainFront{xa:.0f}", (xa, xb, 21, 21.5, -0.05, 0.004, "ConcreteClean", 2.0))
+    ext_row(f"Main{xa:.0f}", "x", xa + 0.5, xb - 0.5, 21.5, "S", depth=6.0, facades=("StuccoCream", "BrickClean", "StuccoWhite"), floors=(1, 2), brownstones=0.5)
+    for x in range(int(xa) + 3, int(xb) - 2, 7):
+        round_tree(f"Prop_ExtTree{x}", x + 0.5, 11.0, h=5.0, r=1.6)
+single("Ext_SideRoad", (-1.5, 1.5, -52, -28, -0.05, 0.0, "AsphaltClean", 2.0))
+for s_ in (-1, 1):
+    xa, xb = sorted((s_ * 1.5, s_ * 4.5))
+    single(f"Ext_SideWalk{s_}", (xa, xb, -52, -28, -0.05, 0.004, "ConcreteClean", 2.0))
+    for k3, (y0, y1) in enumerate(((-38.0, -31.0), (-49.0, -42.0))):
+        house2(f"Ext{s_}{k3}", {"min": [min(s_ * 5.5, s_ * 14.5), 0, y0], "max": [max(s_ * 5.5, s_ * 14.5), 4, y1]}, -s_,
+               ["StuccoCream", "StuccoWhite", "StuccoPeach"][k3 % 3], ["RoofBrown", "RoofRed"][k3 % 2])
+
+# where the player's part of the suburbs ends (doc map)
+barricades("Barricade_W", 13.5, 21.0, -12.0, along_y=True)
+barricades("Barricade_E", 13.5, 21.0, 12.0, along_y=True)
+barricades("Barricade_S", -4.5, 4.5, -27.6)
+
+# wider roads and sidewalks (everything beside them moves out to make room)
+warp_scene(zones_x=[(0.0, 4.65, WIDEN)], zones_y=[(17.5, 4.0, WIDEN)])
 
 export(PROJECT + "/Assets/Hitman/Art/Suburbs/Suburbs.fbx", HERE + "/Suburbs.blend")

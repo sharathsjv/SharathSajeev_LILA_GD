@@ -24,7 +24,7 @@ namespace Hitman
 
         [Header("Time")]
         [Tooltip("Real seconds for one day from Day Start to Day End.")]
-        [SerializeField] float realSecondsPerDay = 600;
+        [SerializeField] float realSecondsPerDay = 1500;
         [SerializeField] int dayStartHour = 7;
         [SerializeField] int dayEndHour = 24;
         [Tooltip("If the player hasn't slept by this hour (e.g. 26 = 2 AM) they pass out.")]
@@ -33,6 +33,10 @@ namespace Hitman
         [SerializeField] int taxiMinutes = 15;
         [Tooltip("Real seconds a fast-forward takes, however much game time it skips.")]
         [SerializeField] float fastForwardSeconds = 2.5f;
+        [Tooltip("How long (real seconds) the subway ride screen shows while the clock skips ahead.")]
+        [SerializeField] float subwayRideSeconds = 6f;
+        [Tooltip("How long (real seconds) the screen takes to fade out, and again to fade in, between scenes.")]
+        [SerializeField] float fadeSeconds = 0.35f;
 
         [Header("Needs (0 = fine, 1 = desperate)")]
         [SerializeField] float hungerPerHour = 0.08f;
@@ -68,6 +72,8 @@ namespace Hitman
         float MinutesPerRealSecond => (dayEndHour - dayStartHour) * 60f / realSecondsPerDay;
 
         float _ffRate = 1;
+        float _fullFor;                                  // game minutes before hunger starts rising again
+        public bool Full => _fullFor > 0;
 
         public event Action<int> DayStarted;
         public event Action Restored;            // after going back to a checkpoint
@@ -125,14 +131,27 @@ namespace Hitman
             DayStarted?.Invoke(day);
         }
 
+        // A fast-forward / time skip is in progress (the world is simulated through it, just faster).
+        public bool FastForwarding => _ffRate > 1.01f;
+
         void Update()
         {
             if (!ClockRunning) return;
-            float dm = Time.deltaTime * MinutesPerRealSecond * _ffRate;
-            Minutes += dm;
-            Hunger = Mathf.Clamp01(Hunger + hungerPerHour * dm / 60f);
-            Tiredness = Mathf.Clamp01(Tiredness + tirednessPerHour * dm / 60f);
-            foreach (var p in People) p.Tick(Minutes, MinutesPerRealSecond, Current.Id, dm);
+            float dt = FastForwarding ? Time.unscaledDeltaTime : Time.deltaTime;
+            float dm = dt * MinutesPerRealSecond * _ffRate;
+            // Small slices, so every routine step and every trigger (poison, wet floor...) happens in order, even
+            // when hours go by in a couple of seconds.
+            int n = Mathf.Max(1, Mathf.CeilToInt(dm / 0.5f));
+            float slice = dm / n;
+            for (int i = 0; i < n; i++)
+            {
+                Minutes += slice;
+                if (_fullFor > 0) _fullFor -= slice;
+                else Hunger = Mathf.Clamp01(Hunger + hungerPerHour * slice / 60f);
+                Tiredness = Mathf.Clamp01(Tiredness + tirednessPerHour * slice / 60f);
+                foreach (var p in People) p.Tick(Minutes, MinutesPerRealSecond, Current.Id, slice);
+                if (Contract.I != null) Contract.I.Simulate(slice);
+            }
             if (Minutes >= passOutHour * 60 && !Busy) PassOut();
             else if (Hunger >= 1f && !Busy && !Failing) Faint();
         }
@@ -191,7 +210,7 @@ namespace Hitman
             var look = Look;
             _checkpoint = new Checkpoint
             {
-                day = Day, minutes = Minutes, hunger = Hunger, tiredness = Tiredness,
+                day = Day, minutes = Minutes, hunger = Hunger, tiredness = Tiredness, full = _fullFor,
                 area = Current.Id, position = player.transform.position, rotation = player.transform.rotation,
                 state = S.Copy(), outfit = look != null ? look.Current : null,
                 alive = People.Select(p => p.Alive).ToArray(),
@@ -226,6 +245,7 @@ namespace Hitman
             Day = c.day;
             Minutes = c.minutes;
             Hunger = c.hunger;
+            _fullFor = c.full;
             Tiredness = c.tiredness;
             S = c.state.Copy();
             var area = Area(c.area) ?? homeStart.Area;
@@ -242,6 +262,15 @@ namespace Hitman
         }
 
         public void RestartFromCheckpoint() => Restore(_checkpoint);
+
+        // Start over from the title screen: a fresh first morning, nothing carried over.
+        public void RestartGame()
+        {
+            Time.timeScale = 1;
+            var scene = gameObject.scene;
+            if (scene.buildIndex >= 0) UnityEngine.SceneManagement.SceneManager.LoadScene(scene.buildIndex);
+            else UnityEngine.SceneManagement.SceneManager.LoadScene(scene.name);
+        }
 
         // ---------- Areas, doors & travel ----------
 
@@ -284,15 +313,16 @@ namespace Hitman
             }));
         }
 
+        // A scene change: fade to black (where you're going on the black), swap, fade back in.
         IEnumerator Fade(string label, Action swap)
         {
             Busy = true;
             player.Stop();
-            ui.ShowSkip(true, label, false);
-            yield return new WaitForSeconds(0.3f);
+            ui.HideActions();
+            yield return ui.FadeScreen(1, fadeSeconds, label);
             swap();
-            yield return new WaitForSeconds(0.25f);
-            ui.ShowSkip(false, label, false);
+            yield return new WaitForSecondsRealtime(0.15f);
+            yield return ui.FadeScreen(0, fadeSeconds);
             Busy = false;
         }
 
@@ -301,6 +331,10 @@ namespace Hitman
             var dest = District(districtId);
             if (dest == null || Busy) return;
             int minutes = bySubway ? subwayMinutes : taxiMinutes;
+            // By subway the screen shows the ride itself (SubwayRide) rather than going dark.
+            var ride = bySubway ? SubwayRide.I : null;
+            Action<bool> screen = null;
+            if (ride != null) screen = on => { if (on) ride.Show(dest.DisplayName); else ride.Hide(); };
             StartCoroutine(Skip(minutes, bySubway ? $"Subway to {dest.DisplayName}" : $"Taxi to {dest.DisplayName}", false, () =>
             {
                 EnterArea(dest);
@@ -308,18 +342,20 @@ namespace Hitman
                 if (spot != null) player.Teleport(spot.transform.position, spot.transform.rotation);
                 cam.Snap(player.transform);
                 arrived?.Invoke();
-            }));
+            }, ride != null ? subwayRideSeconds : 0, screen, true));
         }
 
         // ---------- Eating & sleeping ----------
 
         public void FastForward(float gameMinutes, string label, Action done) => StartCoroutine(Skip(gameMinutes, label, true, done));
 
-        public void Eat(string what, int minutes = 20)
+        // fullHours: a proper meal keeps hunger away for a while before it starts creeping back (cereal doesn't).
+        public void Eat(string what, int minutes = 20, float fullHours = 0)
         {
             StartCoroutine(Skip(minutes, $"Eating {what}", true, () =>
             {
                 Hunger = 0;
+                _fullFor = Mathf.Max(_fullFor, fullHours * 60);
                 if (Day == 1 && !Tutorial.Running) ui.OpenNotesAfterBreakfast();   // jot down a plan over breakfast
             }));
         }
@@ -329,6 +365,44 @@ namespace Hitman
             // Minutes keeps counting past midnight (e.g. 25:30), so next morning is always 24h + start.
             float toMorning = (24 + dayStartHour) * 60 - Minutes;
             StartCoroutine(Skip(toMorning, "Sleeping", true, () => BeginDay(Day + 1)));
+        }
+
+        // ---------- The office job: sit and type while time races, until 17:00 or until they tap ----------
+
+        [Header("Office job")]
+        [SerializeField] int officePayPerHour = 8;
+        [Tooltip("Game hours of work per real second while typing.")]
+        [SerializeField] float workHoursPerSecond = 0.5f;
+        public bool AtDesk { get; private set; }
+        bool _stopWork;
+
+        public void WorkAtDesk(float endHour = 17f)
+        {
+            if (Busy || Minutes >= endHour * 60) { ui.Toast("Nobody's working now. Come back in the morning."); return; }
+            StartCoroutine(Work(endHour));
+        }
+
+        public void StopWork() => _stopWork = true;
+
+        IEnumerator Work(float endHour)
+        {
+            Busy = true;
+            AtDesk = true;
+            _stopWork = false;
+            player.SetPose("Typing");
+            float start = Minutes;
+            ui.ShowSkip(true, "Working... (tap to stop)", true);
+            _ffRate = workHoursPerSecond * 60f / MinutesPerRealSecond;
+            Time.timeScale = Mathf.Clamp(_ffRate, 1f, 8f);
+            while (Minutes < endHour * 60 && !_stopWork && !Failing) yield return null;
+            _ffRate = 1;
+            Time.timeScale = 1;
+            ui.ShowSkip(false, "", true);
+            AtDesk = false;
+            Busy = false;
+            int hours = Mathf.FloorToInt((Minutes - start) / 60f);
+            if (hours > 0) Earn(hours * officePayPerHour, $"{hours} hours at the paper company");
+            else ui.Toast("You stop before the hour's up - no pay for that.");
         }
 
         // Gone all day without eating: everything goes black for a few hours.
@@ -350,19 +424,33 @@ namespace Hitman
         }
 
         // Fast-forward: game time races by over a couple of real seconds with the tape effect (or a fade for travel).
-        IEnumerator Skip(float gameMinutes, string label, bool tape, Action done)
+        // realSeconds: how long the skip takes (0 = the usual); screen: shows/hides something else in place of the
+        // overlay (the subway ride).
+        // fade: a trip to another scene (taxi, subway), faded out and in at both ends.
+        IEnumerator Skip(float gameMinutes, string label, bool tape, Action done, float realSeconds = 0, Action<bool> screen = null,
+                         bool fade = false)
         {
             Busy = true;
             player.Stop();
-            ui.ShowSkip(true, label, tape);
+            ui.HideActions();
+            if (fade) yield return ui.FadeScreen(1, fadeSeconds, "");
+            if (screen != null) screen(true);
+            else ui.ShowSkip(true, label, tape);
+            if (fade) yield return ui.FadeScreen(0, fadeSeconds);
             yield return new WaitForSeconds(0.25f);
-            _ffRate = gameMinutes / (fastForwardSeconds * MinutesPerRealSecond);
+            _ffRate = gameMinutes / ((realSeconds > 0 ? realSeconds : fastForwardSeconds) * MinutesPerRealSecond);
+            Time.timeScale = Mathf.Clamp(_ffRate, 1f, 8f);                   // the world visibly races along
             float target = Minutes + gameMinutes;
             while (Minutes < target) yield return null;
             _ffRate = 1;
+            Time.timeScale = 1;
+            if (fade) yield return ui.FadeScreen(1, fadeSeconds);
             done?.Invoke();
-            yield return new WaitForSeconds(0.2f);
-            ui.ShowSkip(false, label, tape);
+            if (fade) yield return new WaitForSecondsRealtime(0.1f);
+            else yield return new WaitForSeconds(0.2f);
+            if (screen != null) screen(false);
+            else ui.ShowSkip(false, label, tape);
+            if (fade) yield return ui.FadeScreen(0, fadeSeconds);
             Busy = false;
         }
     }

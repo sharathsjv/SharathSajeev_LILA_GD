@@ -35,6 +35,13 @@ namespace Hitman
             if (r == null || r.kind != Kind.Private) return true;
             var g = Game.I;
             if (g.S.Has("unlocked." + into.Id)) return true;
+            // A friend: he lets you in when he's home and up.
+            var kevin = Contract.I != null ? Contract.I.Target : null;
+            if (g.S.Has("kevin.friend") && r.Owner == kevin && kevin != null && kevin.Alive && kevin.IsAwake && kevin.AreaId != null && kevin.AreaId.StartsWith(into.Id))
+            {
+                g.UI.Toast("Kevin opens the door. \"Hey! Come in, come in.\"");
+                return true;
+            }
             if (g.S.Holding(r.key))
             {
                 g.S.Set("unlocked." + into.Id);

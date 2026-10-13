@@ -37,6 +37,8 @@ namespace Hitman
             public Transform t;
             public Animator anim;
             public Vector3 from, to;
+            public Vector3 at;          // where they are along their line (they step round things off it)
+            public float detour;
             public float wait;
             public float speed;
             public bool active;
@@ -69,8 +71,18 @@ namespace Hitman
         void Build()
         {
             _built = true;
-            _cam = Camera.main;
+            _cam = GameCamera();
             foreach (var l in GetComponentsInChildren<Lane>(true)) (l.LaneKind == Lane.Kind.Road ? _roads : _sidewalks).Add(l);
+            var area = GetComponentInParent<Area>();
+            if (area != null)
+                foreach (var r in area.GetComponentsInChildren<Renderer>(true))
+                    foreach (var o in Obstacles)
+                        if (r.name.StartsWith(o))
+                        {
+                            var b = r.bounds;
+                            b.Expand(new Vector3(0.7f, 10f, 0.7f));                  // (a body's width round it; any height)
+                            _obstacles.Add(b);
+                        }
             if (_sidewalks.Count > 0 && pedestrianModels != null && pedestrianModels.Length > 0)
                 for (int i = 0; i < Mathf.RoundToInt(pedestrianCount * Density); i++) _walkers.Add(MakeWalker(i));
             if (_roads.Count > 0)
@@ -146,7 +158,9 @@ namespace Hitman
             w.speed = walkSpeed * Random.Range(0.85f, 1.15f);
             w.from = Vector3.Lerp(a, b, startT) + side;
             w.to = b + side;
-            w.t.position = w.from;
+            w.at = w.from;
+            w.detour = Detour(w.at, (b - a).normalized);
+            w.t.position = w.at + Vector3.Cross(Vector3.up, (b - a).normalized) * w.detour;
             w.t.rotation = Quaternion.LookRotation(b - a);
             w.t.gameObject.SetActive(true);
             w.active = true;
@@ -164,6 +178,33 @@ namespace Hitman
             return best;
         }
 
+        // Things on the sidewalk passers-by walk round rather than through.
+        static readonly string[] Obstacles = { "Station_Stairs", "Prop_Stoops_", "Prop_Bench", "Phone booth" };
+        readonly List<Bounds> _obstacles = new List<Bounds>();
+
+        // How far to the side (along the lane's left) to step to keep p clear of the obstacles (0 = clear): the
+        // smallest step that's clear of all of them.
+        float Detour(Vector3 p, Vector3 dir)
+        {
+            var left = Vector3.Cross(Vector3.up, dir);
+            if (Clear(p)) return 0;
+            for (float k = 0.1f; k < 4f; k += 0.1f)
+            {
+                if (Clear(p + left * k)) return k;
+                if (Clear(p - left * k)) return -k;
+            }
+            return 0;
+        }
+
+        bool Clear(Vector3 p)
+        {
+            foreach (var b in _obstacles) if (b.Contains(new Vector3(p.x, b.center.y, p.z))) return false;
+            return true;
+        }
+
+        // The game's camera, even while it's switched off (the subway ride screen has its own): Camera.main is null then.
+        static Camera GameCamera() => Game.I != null && Game.I.Cam != null ? Game.I.Cam.GetComponent<Camera>() : Camera.main;
+
         bool OnScreen(Vector3 p, float margin)
         {
             var v = _cam.WorldToViewportPoint(p);
@@ -172,7 +213,7 @@ namespace Hitman
 
         void Update()
         {
-            if (_cam == null) _cam = Camera.main;
+            if (_cam == null) _cam = GameCamera();
             float dt = Time.deltaTime;
 
             foreach (var w in _walkers)
@@ -183,8 +224,13 @@ namespace Hitman
                     if (w.wait <= 0) SpawnWalker(w);
                     continue;
                 }
-                var pos = Vector3.MoveTowards(w.t.position, w.to, w.speed * dt);
-                w.t.position = pos;
+                var pos = w.at = Vector3.MoveTowards(w.at, w.to, w.speed * dt);
+                var dir = (w.to - w.from).normalized;
+                // Step round the subway stairs, stoops, benches and phone booths (looking a little ahead).
+                float need = Detour(pos + dir * 2.0f, dir);
+                if (Mathf.Abs(Detour(pos, dir)) > Mathf.Abs(need)) need = Detour(pos, dir);
+                w.detour = Mathf.MoveTowards(w.detour, need, 2.5f * dt);
+                w.t.position = pos + Vector3.Cross(Vector3.up, dir) * w.detour;
                 if (w.anim != null)
                 {
                     w.anim.SetFloat("Speed", w.speed);

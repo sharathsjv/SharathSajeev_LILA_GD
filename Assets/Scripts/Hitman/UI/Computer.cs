@@ -32,7 +32,8 @@ namespace Hitman
                 return null;
             }
         }
-        public event Action Closed;
+        public event Action Closed;            // the first time it's closed
+        public event Action EveryClose;        // every time
 
         public void Init(RectTransform parent)
         {
@@ -168,6 +169,7 @@ namespace Hitman
                 _firstClose = false;
                 Closed?.Invoke();
             }
+            EveryClose?.Invoke();
         }
 
         void Update()

@@ -138,7 +138,7 @@ namespace Hitman
     public class Checkpoint
     {
         public int day;
-        public float minutes, hunger, tiredness;
+        public float minutes, hunger, tiredness, full;
         public string area;
         public Vector3 position;
         public Quaternion rotation;

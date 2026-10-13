@@ -152,7 +152,8 @@ namespace Hitman
                 _legActive = false;
             }
 
-            bool onScreen = playerArea == AreaId && !InTransit;
+            // (in a fast-forward everyone moves on game time, so the world keeps up with the clock)
+            bool onScreen = playerArea == AreaId && !InTransit && !Game.I.FastForwarding;
             if (!_legActive && _legs.Count > 0) StartLeg(_legs.Peek(), minutes, onScreen);
 
             if (_legActive)
@@ -161,9 +162,8 @@ namespace Hitman
                 if (!onScreen)
                 {
                     // Off-screen: move in a straight line at walking pace (game-time based, so fast-forward works).
-                    _mover.Stop();
                     var step = _mover.WalkSpeed / gameMinutesPerRealSecond * gameMinutesThisFrame;
-                    transform.position = Vector3.MoveTowards(transform.position, leg.point, step);
+                    _mover.Glide(leg.point, step);
                     if ((transform.position - leg.point).sqrMagnitude < 0.01f) FinishLeg();
                 }
                 else if (!_mover.Moving)

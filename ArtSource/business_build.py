@@ -16,18 +16,20 @@ door_z = lambda n: LAYOUT[n]["pos"][2]
 LAMP_SPACING = 10.0
 CROSS = (1.0, 6.0)           # the east-west road crossing the avenue (Z span)
 SPUR = (-15.0, -10.0)        # the side road off the east sidewalk
-KIOSK = (-17.6, -14.4)       # the subway entrance on the west sidewalk
+NORTH = 47.0                 # the north end of the avenue (it used to stop at 27: lengthened with more brownstones)
+KIOSK_Y = 40.0               # the subway entrance on the west sidewalk, between the last two stoops (well back from
+                             # the north barricades, far from the Corner Bar at the south end)
 
 # ---------------------------------------------------------------- ground: clean paving, light asphalt, green verges
 
-single("Gnd_Plaza", (-26.5, 26.5, -27, 27, -0.08, -0.01, "ConcreteClean", 2.0))
-single("Gnd_Road", (-3, 3, -27, 27, -0.05, 0.0, "AsphaltClean", 2.0))
+single("Gnd_Plaza", (-26.5, 26.5, -27, NORTH, -0.08, -0.01, "ConcreteClean", 2.0))
+single("Gnd_Road", (-3, 3, -27, NORTH, -0.05, 0.0, "AsphaltClean", 2.0))
 single("Gnd_CrossRoad", (-26.5, 26.5, CROSS[0], CROSS[1], -0.05, 0.0, "AsphaltClean", 2.0))
 single("Gnd_SpurRoad", (3, 26.5, SPUR[0], SPUR[1], -0.05, 0.0, "AsphaltClean", 2.0))
 def gaps(s):
     """Stretches of the avenue's curb, minus the road crossings."""
     out = [(-27, CROSS[0])] if s < 0 else [(-27, SPUR[0]), (SPUR[1], CROSS[0])]
-    return out + [(CROSS[1], 27)]
+    return out + [(CROSS[1], NORTH)]
 
 
 for s in (-1, 1):                                     # sidewalks stop at each road crossing them
@@ -51,7 +53,7 @@ verge.done()
 curbs.done()
 
 paint = Builder("NoCol_RoadPaint")
-for (ya, yb) in ((-27, CROSS[0] - 1.5), (CROSS[1] + 1.5, 27)):
+for (ya, yb) in ((-27, CROSS[0] - 1.5), (CROSS[1] + 1.5, NORTH)):
     for dx in (-0.12, 0.12):
         paint.box(dx - 0.05, dx + 0.05, ya, yb, 0, 0.004, "LineYellow")                      # double yellow
     for s in (-1, 1):
@@ -69,7 +71,7 @@ for x0 in (-26, 3.5):
 paint.done()
 
 decals = Builder("NoCol_Decals")                       # a few newspapers blowing about, nothing worse
-for (x, y) in [(-5.8, -10.0), (5.6, 18.0), (-4.2, 22.5)]:
+for (x, y) in [(-5.8, -10.0), (5.6, 18.0), (-4.2, 22.5), (4.4, 33.0)]:
     decals.box(x - 0.4, x + 0.4, y - 0.4, y + 0.4, 0.005, 0.008, "Litter")
 decals.done()
 
@@ -236,9 +238,24 @@ def dept_store(key, src, street, door, sign):
         T.done()
     return B.done(), H
 
+# room at the north end and the far corners for the upkept brownstones (doc map)
+LAYOUT["Apartments"]["min"][2], LAYOUT["Apartments"]["max"][2] = 12.0, 18.5
+LAYOUT["Mall"]["max"][2] = 19.0
+brownstone_row("UpkeepNW", {"min": [-18.5, 0, 19.5], "max": [-6.5, 0, 27.0]}, +1)
+brownstone_row("UpkeepNE", {"min": [6.5, 0, 20.5], "max": [24.5, 0, 27.0]}, -1)
+# the lengthened north end: more upkept brownstones both sides (the last west row's two stoops leave a gap for the
+# subway entrance)
+brownstone_row("UpkeepNW2", {"min": [-18.5, 0, 27.0], "max": [-6.5, 0, 36.2]}, +1)
+brownstone_row("UpkeepNW3", {"min": [-18.5, 0, 36.2], "max": [-6.5, 0, NORTH]}, +1, unit=5.3)
+brownstone_row("UpkeepNE2", {"min": [6.5, 0, 27.0], "max": [24.5, 0, 37.0]}, -1)
+brownstone_row("UpkeepNE3", {"min": [6.5, 0, 37.0], "max": [24.5, 0, NORTH]}, -1, unit=4.9)
+brownstone_row("UpkeepSW", {"min": [-26.5, 0, -14.0], "max": [-21.0, 0, -0.5]}, "N")
+brownstone_row("UpkeepS", {"min": [7.5, 0, -27.0], "max": [19.5, 0, -19.0]}, -1)
+fence = Builder("Prop_AlleyFence", (6.7, 19.75, 0))                       # the alley by the mall, fenced off
+fence.box(6.65, 6.75, 19.0, 20.5, 0, 2.2, "Fence")
+fence.done()
 schrute_tower("Tower1", LAYOUT["Tower 1"], +1, door_z("Door (Tower 1)"), "SignSchrute")             # Schrute Towers
 deco_tower("Tower3", LAYOUT["Tower 3"], 12, -1)
-office("Tower2", LAYOUT["Tower 2"], 9, -1, base="LimestoneDark")      # the glass tower, further back
 dept_store("Mall", LAYOUT["Mall"], -1, door_z("Door (Mall)"), "SignMall")
 building("Apartments", LAYOUT["Apartments"], 7, "BrickClean", +1, door=13.0, clean=True,
          roof=[(-14.0, 20.0, "tank"), (-10.0, 15.0, "ac")])
@@ -253,29 +270,31 @@ door_obj("CoffeeShop", -6.5, +1, door_z("Door (Coffee Shop)"))
 door_obj("CornerBar", -6.5, +1, door_z("Door (Corner Bar)"))
 door_obj("Apartments", -6.5, +1, 13.0)            # Oscar goes home through here (not enterable by the player)
 
-skyline("Gnd_Skyline", (-26.5, 26.5, -27, 27))
+
 
 # ---------------------------------------------------------------- street furniture
 
-subway_kiosk("Station_Stairs", -4.75, -16.0, along_y=True)
+subway_kiosk("Station_Stairs", -4.75, KIOSK_Y, along_y=True)
 taxi_sign(6.1, -3.0)
 
 n = 0
 for s_ in (-1, 1):                                    # lamps in the verges, from the junction outwards
     for start, step in ((CROSS[1] + 0.8, LAMP_SPACING), (CROSS[0] - 0.8, -LAMP_SPACING)):
         y = start
-        while -26.5 <= y <= 26.5:
+        while -26.5 <= y <= NORTH - 0.5:
             if not (s_ > 0 and SPUR[0] - 0.5 < y < SPUR[1] + 0.5):
                 n += 1
                 lamp(f"Prop_Lamp{n:02d}", s_ * 3.55, y, (-s_, 0), 0.0)
             y += step
 k = 0
 for s_ in (-1, 1):                                    # street trees in the verges, between the lamps
-    for y in (-23.0, -18.0, -4.0, 11.5, 16.5, 21.5):
+    for y in (-23.0, -18.0, -4.0, 11.5, 16.5, 21.5, 31.5, 41.5):
         if s_ > 0 and SPUR[0] - 1 < y < SPUR[1] + 1: continue
+        if s_ < 0 and abs(y - KIOSK_Y) < 3: continue        # (the subway entrance is there)
         k += 1
         round_tree(f"Prop_Tree{k:02d}", s_ * 3.55, y, h=5.5, r=1.25)
-for i, (x, y) in enumerate([(-5.9, -3.0), (5.9, 14.0), (-5.9, 19.5), (5.9, -21.0)]):
+for i, (x, y) in enumerate([(-5.9, -3.0), (5.9, 14.0), (-5.9, 16.5), (5.9, -21.0)]):
+    if i == 0: continue                               # (none in front of Schrute Towers any more)
     bench(f"Prop_Bench{i}", x, y)
 for i, (x, y, f) in enumerate([(-3.3, 0.7, (0, -1)), (3.3, 0.7, (0, -1)), (-3.3, 6.3, (0, 1)), (3.3, 6.3, (0, 1))]):
     traffic_light(f"Prop_TrafficLight{i}", x, y, f)
@@ -290,5 +309,44 @@ for i, y in enumerate((-1.8, -1.2)):
     B.done()
 pp = Builder("Payphone_1", (-6.2, 3.0, 0))
 pp.box(-6.45, -6.05, 2.7, 3.3, 0.6, 2.0, "Payphone").box(-6.45, -6.3, 2.65, 3.35, 0, 2.2, "Steel").done()
+
+# ---------------------------------------------------------------- past the barricades: the city carries on
+EXT_N = NORTH + 23
+single("Ext_Ground", (-50, 50, -50, EXT_N, -0.12, -0.03, "ConcreteClean", 2.0))
+for (ya, yb) in ((NORTH, EXT_N), (-50, -27)):                                   # the avenue, north and south
+    single(f"Ext_Avenue{ya:.0f}", (-3, 3, ya, yb, -0.05, 0.0, "AsphaltClean", 2.0))
+    for s_ in (-1, 1):
+        xa, xb = sorted((s_ * 3, s_ * 6.5))
+        single(f"Ext_AvenueWalk{ya:.0f}{s_}", (xa, xb, ya, yb, -0.05, 0.004, "ConcreteClean", 2.0))
+    ext_row(f"N{ya:.0f}W", "y", ya + 0.5, yb - 0.5, -6.5, +1, facades=("BrickClean", "Limestone", "StuccoCream"), brownstones=0.4)
+    ext_row(f"N{ya:.0f}E", "y", ya + 0.5, yb - 0.5, 6.5, -1, facades=("BrickClean", "Limestone", "GraniteLight"), brownstones=0.3)
+for (xa, xb) in ((-50, -26.5), (26.5, 50)):                                    # the cross road, east and west
+    single(f"Ext_Cross{xa:.0f}", (xa, xb, 1, 6, -0.05, 0.0, "AsphaltClean", 2.0))
+    single(f"Ext_CrossWalkN{xa:.0f}", (xa, xb, 6, 7.5, -0.05, 0.004, "ConcreteClean", 2.0))
+    single(f"Ext_CrossWalkS{xa:.0f}", (xa, xb, -0.5, 1, -0.05, 0.004, "ConcreteClean", 2.0))
+    ext_row(f"C{xa:.0f}N", "x", xa + 0.5, xb - 0.5, 7.5, "S", facades=("BrickClean", "Limestone"), brownstones=0.4)
+    ext_row(f"C{xa:.0f}S", "x", xa + 0.5, xb - 0.5, -0.5, "N", facades=("BrickClean", "StuccoCream"), brownstones=0.3)
+single("Ext_Spur", (26.5, 50, -15, -10, -0.05, 0.0, "AsphaltClean", 2.0))      # the side road east
+ext_row("SpurN", "x", 27.0, 49.5, -9.5, "S", facades=("BrickClean", "GraniteLight"))
+ext_row("SpurS", "x", 27.0, 49.5, -15.5, "N", facades=("BrickClean", "Limestone"), brownstones=0.5)
+paint2 = Builder("NoCol_ExtPaint")
+for (ya, yb) in ((NORTH, EXT_N), (-50, -27)):
+    for dx in (-0.12, 0.12): paint2.box(dx - 0.05, dx + 0.05, ya, yb, 0, 0.004, "LineYellow")
+paint2.done()
+for s_ in (-1, 1):
+    for y in (NORTH + 6.0, NORTH + 16.0, -33.0, -43.0):
+        n += 1
+        lamp(f"Prop_Lamp{n:02d}", s_ * 3.55, y, (-s_, 0), 0.0)
+skyline("Gnd_Skyline", (-50, 50, -50, EXT_N))
+
+# where the player's part of the district ends (doc map)
+barricades("Barricade_N", -6.5, 6.5, NORTH - 1.4)
+barricades("Barricade_S", -6.5, 6.5, -25.6)
+barricades("Barricade_W", 1.0, 6.0, -21.0, along_y=True)
+barricades("Barricade_E", 1.0, 6.0, 21.0, along_y=True)
+barricades("Barricade_Spur", -15.0, -10.0, 21.0, along_y=True)
+
+# wider roads and sidewalks (everything beside them moves out to make room)
+warp_scene(zones_x=[(0.0, 6.5, WIDEN)], zones_y=[(3.5, 3.5, WIDEN)])
 
 export(PROJECT + "/Assets/Hitman/Art/Business/BusinessDistrict.fbx", HERE + "/BusinessDistrict.blend")

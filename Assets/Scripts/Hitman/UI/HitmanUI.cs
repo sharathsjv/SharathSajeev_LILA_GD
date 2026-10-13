@@ -56,11 +56,16 @@ namespace Hitman
         [SerializeField] Assignment assignment;
         [SerializeField] PlayerController player;
 
+        // Everything that takes over taps apart from the little tap menu (tapping elsewhere just closes that).
+        public bool BlockingExceptMenu => sidePanel.activeSelf || skipOverlay.activeSelf || _wardrobe.IsOpen || _overlays.Blocking || _computer.IsOpen || _paperView.IsOpen || _notebook.IsOpen || _keyboard.IsOpen;
+        public bool MenuOpen => _menu != null && _menu.gameObject.activeSelf;
         public bool Blocking => (_menu != null && _menu.gameObject.activeSelf) || sidePanel.activeSelf || skipOverlay.activeSelf || _wardrobe.IsOpen || _overlays.Blocking || _computer.IsOpen || _paperView.IsOpen || _notebook.IsOpen || _keyboard.IsOpen;
 
         readonly Queue<string> _toasts = new Queue<string>();
         float _toastTimer;
         bool _emailRead, _notesStarted;
+        public BarShift BarShift { get; private set; }
+        public WorldMarks Marks { get; private set; }
         Tutorial _tutorial;
         bool _tape;
         WardrobeUI _wardrobe;
@@ -95,6 +100,7 @@ namespace Hitman
             _computer = gameObject.AddComponent<Computer>();
             _computer.Init((RectTransform)sidePanel.transform.parent);
             _computer.Closed += () => { if (!_emailRead) { _emailRead = true; if (!Tutorial.Running) Toast("First things first: breakfast. Tap the fridge."); } };
+            _computer.EveryClose += SuggestReplay;
             _notebook = gameObject.AddComponent<NotebookView>();
             _notebook.Init((RectTransform)sidePanel.transform.parent);
             _paperView = gameObject.AddComponent<NewspaperView>();
@@ -102,15 +108,20 @@ namespace Hitman
             _keyboard = gameObject.AddComponent<OnScreenKeyboard>();
             _overlays = gameObject.AddComponent<Overlays>();
             _overlays.Init((RectTransform)sidePanel.transform.parent, notepadButton);
+            Marks = gameObject.AddComponent<WorldMarks>();
+            Marks.Init((RectTransform)sidePanel.transform.parent);
             // Only three icons on screen (watch, pause, notebook): the clock box goes, the watch shows the time.
             dayText.transform.parent.gameObject.SetActive(false);
             BuildDynamic();
             BuildTipButton();
             StyleLikeTheOS();
+            BarShift = gameObject.AddComponent<BarShift>();
+            BarShift.Init((RectTransform)sidePanel.transform.parent);
             _tutorial = gameObject.AddComponent<Tutorial>();
             _tutorial.Init((RectTransform)sidePanel.transform.parent);
             _keyboard.Init((RectTransform)sidePanel.transform.parent);      // last, so it sits on top
             sidePanel.transform.parent.gameObject.AddComponent<HardEdges>();  // the same hard-edged look everywhere
+            sidePanel.transform.parent.gameObject.AddComponent<TextScale>();  // bigger text everywhere
         }
 
         void Start()
@@ -121,13 +132,34 @@ namespace Hitman
                 if (_notebook.IsOpen && _notebook.Tab != 1) _notebook.Refresh();
             };
             Game.I.DayStarted += OnDayStarted;
-            if (Game.I.Day == 1) OnDayStarted(1);   // Game.Start may have run first
+            // The title screen first; the first morning starts when they press Play.
+            _menu98 = gameObject.AddComponent<MainMenu>();
+            _menu98.Init(CanvasRoot);
+            _menu98.Show(() => { _started = true; if (Game.I.Day == 1) OnDayStarted(1); });
         }
 
         string _notes = "";
 
+        // The job's done and paid for (the client's email read): there's more than one way to do it - try another.
+        void SuggestReplay()
+        {
+            var st = Game.I.S;
+            if (!st.Has("read.payment") || st.Has("replay.suggested")) return;
+            st.Set("replay.suggested");
+            string how = st.Has("cause.slip") ? "a wet floor" : st.Has("cause.gas") ? "the gas" : "poison";
+            ShowDialog("Contract complete",
+                $"Kevin's gone, and you got paid. You did it with {how}.\n\nBut there's more than one way to arrange an accident - " +
+                "his breakfast, the office coffee, the men's room floor, his lunch, his takeout, the gas at home. " +
+                "Restart and find a different way to eliminate Kevin?",
+                new List<(string, Action)> { ("Restart", () => Game.I.RestartGame()), ("Keep playing", null) });
+        }
+
+        MainMenu _menu98;
+        bool _started;
+
         void OnDayStarted(int day)
         {
+            if (!_started) return;                   // (still on the title screen: Play starts the day)
             if (day == 1 && !Game.I.S.Has("tutorial.done")) _tutorial.Begin();
             else if (day == 1 && !_emailRead) ShowEmail();
             else Toast($"Day {day}. {Game.Clock(Game.I.Minutes)}");
@@ -643,7 +675,7 @@ namespace Hitman
         }
 
         public void ShowContractDone(string name, int pay, bool onTime) => _overlays.ShowContractDone(name, pay, onTime);
-        public void Say(Transform who, string text) => _overlays.Say(who, text);
+        public void Say(Transform who, string text, float seconds = 3.2f) => _overlays.Say(who, text, seconds);
         public void SetNoticed(float share, Transform who) { if (_overlays != null) _overlays.SetNoticed(share, who); }
         public void ShowSpotted(Transform who) => _overlays.ShowSpotted(who);
         public void HideSpotted() => _overlays.HideSpotted();
@@ -694,6 +726,45 @@ namespace Hitman
 
         // ---------- Fast-forward / travel ----------
 
+        // ---------- fading the screen (between scenes) ----------
+
+        Image _fade;
+        Text _fadeLabel;
+
+        // Fade the whole screen to black (to = 1) or back (to = 0) over real time, with an optional caption on the
+        // black (where you're going).
+        public IEnumerator FadeScreen(float to, float seconds, string label = null)
+        {
+            if (_fade == null)
+            {
+                _fade = UIKit.Box(CanvasRoot, "Screen Fade", Color.black, false);
+                _fade.rectTransform.Stretch();
+                _fade.raycastTarget = true;
+                _fadeLabel = UIKit.Label(_fade.transform, "", 34, new Color(0.9f, 0.88f, 0.82f), TextAnchor.MiddleCenter);
+                _fadeLabel.rectTransform.Stretch();
+                _fade.color = new Color(0, 0, 0, 0);
+            }
+            if (label != null) _fadeLabel.text = label;
+            _fade.gameObject.SetActive(true);
+            _fade.transform.SetAsLastSibling();
+            float from = _fade.color.a;
+            for (float t = 0; t < seconds; t += Time.unscaledDeltaTime)
+            {
+                SetFade(Mathf.Lerp(from, to, t / seconds));
+                yield return null;
+            }
+            SetFade(to);
+            if (to <= 0) _fade.gameObject.SetActive(false);
+        }
+
+        void SetFade(float a)
+        {
+            _fade.color = new Color(0, 0, 0, a);
+            var c = _fadeLabel.color;
+            c.a = a;
+            _fadeLabel.color = c;
+        }
+
         public void ShowSkip(bool on, string label, bool tape)
         {
             _tape = tape;
@@ -702,7 +773,7 @@ namespace Hitman
             if (!on) return;
             skipOverlay.transform.SetAsLastSibling();
             skipLabel.text = tape ? $">> {label}" : label;
-            skipTint.color = tape ? new Color(0.05f, 0.08f, 0.12f, 0.45f) : new Color(0, 0, 0, 0.92f);
+            skipTint.color = tape ? new Color(0.05f, 0.08f, 0.12f, 0.18f) : new Color(0, 0, 0, 0.92f);   // (the world shows through)
             scanlines.gameObject.SetActive(tape);
             trackingBar.gameObject.SetActive(tape);
         }

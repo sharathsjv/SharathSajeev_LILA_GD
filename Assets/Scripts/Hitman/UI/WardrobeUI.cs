@@ -51,13 +51,15 @@ namespace Hitman
             bar.offsetMin = new Vector2(12, 12);
             bar.offsetMax = new Vector2(-12, 86);
             UIKit.HList(bar, 10, 0);
-            UIKit.Button(bar, "< Turn", UIKit.PanelLight, () => Spin(-45), 24);
-            UIKit.Button(bar, "Turn >", UIKit.PanelLight, () => Spin(45), 24);
+            _turnL = UIKit.Button(bar, "< Turn", UIKit.PanelLight, () => Spin(-45), 24).gameObject;
+            _turnR = UIKit.Button(bar, "Turn >", UIKit.PanelLight, () => Spin(45), 24).gameObject;
             UIKit.Button(bar, "Reset", UIKit.Muted, () => Wear(_mode == Mode.Barber ? _start : new Outfit { who = _look.SceneCharacter }), 24);
             UIKit.Button(bar, "Done", UIKit.Accent, Close, 26);
 
             _root.gameObject.SetActive(false);
         }
+
+        GameObject _turnL, _turnR;
 
         public void Open(Wardrobe w, Mode mode = Mode.Wardrobe)
         {
@@ -66,6 +68,8 @@ namespace Hitman
             if (_look == null || _busy || IsOpen) return;
             _mode = mode;
             _title.text = mode == Mode.Barber ? $"Barber - ${HaircutPrice} a cut" : "Wardrobe";
+            _turnL.SetActive(mode != Mode.Barber);                                  // (in the chair: no spinning round)
+            _turnR.SetActive(mode != Mode.Barber);
             _start = _look.Current;
             StartCoroutine(OpenRoutine(w));
         }
@@ -84,10 +88,15 @@ namespace Hitman
 
             if (w != null) w.Open(true);
             yield return new WaitForSeconds(0.6f);
-            var cam = g.Cam.transform.forward;
-            cam.y = 0;
-            yield return Turn(player, Quaternion.LookRotation(-cam.normalized));
-            g.Cam.Showcase(player, PanelShare);
+            if (_mode == Mode.Barber)
+                g.Cam.Showcase(player, PanelShare, true);                           // stay in the chair, facing the mirror
+            else
+            {
+                var cam = g.Cam.transform.forward;
+                cam.y = 0;
+                yield return Turn(player, Quaternion.LookRotation(-cam.normalized));
+                g.Cam.Showcase(player, PanelShare);
+            }
             yield return new WaitForSeconds(0.25f);
 
             _o = _look.Current;

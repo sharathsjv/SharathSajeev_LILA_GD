@@ -96,6 +96,18 @@ def shelf_grey(rng):
     return A.metal(rng, [0.38, 0.39, 0.41], 0.95)
 
 
+def brownstone(rng):
+    """Reddish-brown sandstone in big coursed blocks (the rowhouses in the doc's upkeep-property reference)."""
+    Y, X = np.mgrid[0:N, 0:N]
+    img = np.ones((N, N, 3)) * col([0.46, 0.28, 0.21])
+    img *= (0.86 + 0.22 * fbm(rng, 24, 4))[..., None]
+    row = Y // 32
+    img[(Y % 32) < 2] *= 0.72                                                   # bed joints
+    img[(((X + (row % 2) * 48) % 96) < 2)] *= 0.75                             # head joints, staggered
+    img *= (0.95 + 0.08 * vnoise(N, 8, 3, rng))[..., None]
+    return np.clip(img, 0, 1)
+
+
 NEW = {
     "SignBarber": lambda r: sign(r, "BARBER", [0.45, 0.06, 0.06], [0.95, 0.95, 0.92]),
     "SignShopNSave": lambda r: sign(r, "SHOP N SAVE", [0.70, 0.08, 0.08], [0.98, 0.85, 0.20]),
@@ -117,6 +129,7 @@ NEW = {
     "FloorBarber": lambda r: vinyl(r, [0.90, 0.90, 0.88], [0.12, 0.12, 0.13]),
     "LeatherBlack": lambda r: ST.fabric_clean(r, [0.10, 0.10, 0.11]),
     "BasketRed": lambda r: ST.fabric_clean(r, [0.80, 0.10, 0.10]),
+    "Brownstone": brownstone,
 }
 FITTED_NEW = {"SignPhone", "SignBarber", "SignShopNSave", "SignSuits", "SignClosed", "SignFoodCourt", "SignNews", "SignPest",
               "PosterCola", "PosterSale", "PosterFly", "Freezer"}

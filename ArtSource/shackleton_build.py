@@ -74,7 +74,7 @@ decals.done()
 
 # ---------------------------------------------------------------- elevated subway over the middle of the road
 
-COLS = [-25.5, -18.5, -11.5, -1.0, 6.0, 13.0, 20.0, 27.0]
+COLS = [-46.5, -39.5, -32.5, -25.5, -18.5, -11.5, -1.0, 6.0, 13.0, 20.0, 27.0, 34.0, 41.0, 48.0]   # (it carries on past the barricades)
 DECK = 6.0
 rail = Builder("Rail_Columns")
 for y in COLS:
@@ -90,15 +90,15 @@ for y in COLS:
         deck.box(s * 1.1 - 0.06, s * 1.1 + 0.06, y - 0.06, y + 0.06, DECK - 1.9, DECK - 1.9 + L, "Steel",
                  rot=(0, s * 0.85, 0), pivot=(s * 0.2, y, DECK - 1.9))                          # knee braces
 for x in (-1.35, 1.35):
-    deck.box(x - 0.15, x + 0.15, -28, 28, DECK, DECK + 0.75, "Steel")                            # girders
-    deck.box(x - 0.3, x + 0.3, -28, 28, DECK - 0.03, DECK + 0.03, "Steel")
-for k in range(int(56 / 0.6)):
-    y = -28 + 0.3 + k * 0.6
+    deck.box(x - 0.15, x + 0.15, -50, 50, DECK, DECK + 0.75, "Steel")                            # girders
+    deck.box(x - 0.3, x + 0.3, -50, 50, DECK - 0.03, DECK + 0.03, "Steel")
+for k in range(int(100 / 0.6)):
+    y = -50 + 0.3 + k * 0.6
     deck.box(-1.7, 1.7, y - 0.11, y + 0.11, DECK + 0.75, DECK + 0.87, "Wood")                    # ties
 for x in (-0.82, -0.68, 0.68, 0.82):
-    deck.box(x - 0.03, x + 0.03, -28, 28, DECK + 0.87, DECK + 1.0, "Steel")                      # rails
+    deck.box(x - 0.03, x + 0.03, -50, 50, DECK + 0.87, DECK + 1.0, "Steel")                      # rails
 for x in (-1.7, 1.7):
-    deck.box(x - 0.04, x + 0.04, -28, 28, DECK + 0.87, DECK + 1.6, "Steel")                      # walkway rail
+    deck.box(x - 0.04, x + 0.04, -50, 50, DECK + 0.87, DECK + 1.6, "Steel")                      # walkway rail
 deck.done()
 
 trash = Builder("Rail_TrashPiles")
@@ -264,5 +264,30 @@ for s in (-1, 1):
         fence.box(x - 0.05, x + 0.05, y - 0.05, y + 0.05, 0, 2.5, "Steel")
 fence.done()
 
+
+# past the barricades: the street carries on, just as grim
+single("Ext_Lot", (-50, 50, -50, 50, -0.12, -0.04, "Dirt"))
+for (ya, yb) in ((28, 50), (-50, -28)):
+    single(f"Ext_Avenue{ya:.0f}", (-4, 4, ya, yb, -0.05, 0.0, "Asphalt", 2.0))
+    for s_ in (-1, 1):
+        xa, xb = sorted((s_ * 4, s_ * 7.5))
+        single(f"Ext_AvenueWalk{ya:.0f}{s_}", (xa, xb, ya, yb, -0.05, 0.004, "Concrete", 2.0))
+    ext_row(f"N{ya:.0f}W", "y", ya + 0.3, yb - 0.3, -7.5, +1, facades=("BrickRed", "BrickBrown", "Stucco"), clean=False, floors=(2, 5))
+    ext_row(f"N{ya:.0f}E", "y", ya + 0.3, yb - 0.3, 7.5, -1, facades=("BrickBrown", "BrickRed", "Stucco"), clean=False, floors=(2, 5))
+for (xa, xb) in ((-50, -23.5), (23.5, 50)):
+    single(f"Ext_Cross{xa:.0f}", (xa, xb, -9, -4, -0.05, 0.0, "Asphalt", 2.0))
+    single(f"Ext_CrossWalkN{xa:.0f}", (xa, xb, -4, -2.5, -0.05, 0.004, "Concrete", 2.0))
+    single(f"Ext_CrossWalkS{xa:.0f}", (xa, xb, -10.5, -9, -0.05, 0.004, "Concrete", 2.0))
+    ext_row(f"C{xa:.0f}N", "x", xa + 0.3, xb - 0.3, -2.5, "S", facades=("BrickRed", "Stucco"), clean=False, floors=(2, 4))
+    ext_row(f"C{xa:.0f}S", "x", xa + 0.3, xb - 0.3, -10.5, "N", facades=("BrickBrown", "BrickRed"), clean=False, floors=(2, 4))
+
+# where the player's part of Shackleton Ave ends (doc map)
+barricades("Barricade_N", -7.5, 7.5, 22.0)
+barricades("Barricade_S", -7.5, 7.5, -22.0)
+barricades("Barricade_W", -9.0, -4.0, -16.0, along_y=True)
+barricades("Barricade_E", -9.0, -4.0, 16.0, along_y=True)
+
+# wider roads and sidewalks (everything beside them moves out to make room)
+warp_scene(zones_x=[(0.0, 7.5, WIDEN)], zones_y=[(-7.0, 4.0, WIDEN)])
 
 export(PROJECT + "/Assets/Hitman/Art/Shackleton/ShackletonAve.fbx", HERE + "/ShackletonAve.blend")

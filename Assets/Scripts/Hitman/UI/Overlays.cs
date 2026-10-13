@@ -221,7 +221,7 @@ namespace Hitman
 
         // ---------- Speech bubbles ----------
 
-        public void Say(Transform who, string text)
+        public void Say(Transform who, string text, float seconds = 3.2f)
         {
             Bubble b = null;
             foreach (var x in _bubbles) if (x.who == who) { b = x; break; }
@@ -236,7 +236,7 @@ namespace Hitman
                 _bubbles.Add(b);
             }
             b.text.text = text;
-            b.until = Time.time + 3.2f;
+            b.until = Time.time + seconds;
             b.rt.gameObject.SetActive(true);
             b.rt.SetAsLastSibling();
             Place(b);
@@ -535,6 +535,7 @@ namespace Hitman
             var bits = new List<string> { $"${g.S.cash}" };
             if (g.Hunger > 0.6f)
                 bits.Add(FlashHungry ? (Mathf.Repeat(Time.unscaledTime, 0.7f) < 0.4f ? "<color=#FF5050><b>HUNGRY</b></color>" : "<color=#00000000>HUNGRY</color>") : "HUNGRY");
+            else if (g.Full) bits.Add("FULL");
             if (g.Tiredness > 0.6f) bits.Add("TIRED");
             _watchInfo.text = string.Join("   ", bits);
         }
@@ -545,17 +546,33 @@ namespace Hitman
         {
             var blocker = UIKit.Box(_root, "Pause", new Color(0, 0, 0, 0.75f), false);
             _pause = blocker.rectTransform.Stretch();
-            var box = UIKit.Box(_pause, "Box", UIKit.Panel).rectTransform.Anchor(0.32f, 0.22f, 0.68f, 0.78f);
+            var box = UIKit.Box(_pause, "Box", UIKit.Panel).rectTransform.Anchor(0.32f, 0.15f, 0.68f, 0.85f);
             UIKit.VList(box, 18, 30, TextAnchor.MiddleCenter);
             UIKit.Label(box, "Paused", 48, Color.white, TextAnchor.MiddleCenter, FontStyle.Bold).Size(80);
             UIKit.Button(box, "Resume", UIKit.Accent, () => SetPaused(false), 32).Size(90);
             UIKit.Button(box, "Back to last note", UIKit.PanelLight, () => { SetPaused(false); Game.I.RestartFromCheckpoint(); }, 28).Size(80);
+            UIKit.Button(box, "Restart game", UIKit.PanelLight, () =>
+                ShowDialog("Restart", "Start over from the very first morning? Everything you've done so far will be lost.",
+                    new List<(string, Action)> { ("Restart", () => Game.I.RestartGame()), ("Cancel", null) }), 26).Size(70);
+            Button icons = null;
+            icons = UIKit.Button(box, "", UIKit.PanelLight, () =>
+            {
+                var m = Game.I.UI.Marks;
+                m.SetIcons(!m.IconsOn);
+                icons.SetLabel(IconsLabel());
+            }, 26);
+            icons.Size(70);
+            _iconsButton = icons;
             UIKit.Label(box, "<size=20>Every new note in your notebook is a checkpoint.</size>", 20, UIKit.Muted, TextAnchor.MiddleCenter).Size(40);
             _pause.gameObject.SetActive(false);
         }
 
+        Button _iconsButton;
+        static string IconsLabel() => Game.I != null && Game.I.UI.Marks != null && Game.I.UI.Marks.IconsOn ? "Interaction icons: ON" : "Interaction icons: OFF";
+
         public void SetPaused(bool on)
         {
+            if (on && _iconsButton != null) _iconsButton.SetLabel(IconsLabel());
             _pause.gameObject.SetActive(on);
             if (on) _pause.SetAsLastSibling();
             Time.timeScale = on ? 0 : 1;

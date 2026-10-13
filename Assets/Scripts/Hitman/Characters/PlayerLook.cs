@@ -290,6 +290,15 @@ namespace Hitman
         {
             _originals.Clear();
             foreach (var r in _model.GetComponentsInChildren<SkinnedMeshRenderer>(true)) _originals[r] = r.sharedMaterials;
+            _bind.Clear();
+            foreach (var key in _originals.Keys)
+            {
+                if (!(key is SkinnedMeshRenderer r) || r.sharedMesh == null) continue;
+                var mesh = Quaternion.Inverse(_model.rotation) * r.transform.rotation;
+                var bp = r.sharedMesh.bindposes;
+                for (int i = 0; i < r.bones.Length && i < bp.Length; i++)
+                    if (r.bones[i] != null) _bind[Strip(r.bones[i].name)] = mesh * bp[i].inverse.rotation;
+            }
             _bones.Clear();
             foreach (var t in _model.GetComponentsInChildren<Transform>(true))
                 if (!t.name.StartsWith("~") && t.GetComponent<Renderer>() == null) _bones[Strip(t.name)] = t;
@@ -309,9 +318,13 @@ namespace Hitman
             float k = SourceHeight(_builtWho) / SourceHeight(from) * BoneScale(from) / BoneScale(_builtWho);
             bool loose = slot == Slot.Top || slot == Slot.Bottoms;
             var bones = new Transform[src.bones.Length];
-            for (int i = 0; i < bones.Length; i++) bones[i] = Bone(src.bones[i], loose ? k * LooseFit(src.bones[i].name) : k);
+            var binds = src.sharedMesh.bindposes;
+            var mesh = Quaternion.Inverse(characters[from].model.transform.rotation) * src.transform.rotation;   // (its model's space)
+            for (int i = 0; i < bones.Length; i++)
+                bones[i] = Bone(src.bones[i], loose ? k * LooseFit(src.bones[i].name) : k, i < binds.Length ? mesh * binds[i].inverse.rotation : (Quaternion?)null);
             r.bones = bones;
-            r.rootBone = Bone(src.rootBone != null ? src.rootBone : src.bones[0], k);
+            int ri = Array.IndexOf(src.bones, src.rootBone);
+            r.rootBone = ri >= 0 ? bones[ri] : Bone(src.rootBone != null ? src.rootBone : src.bones[0], k, null);
             r.updateWhenOffscreen = true;
             _added.Add(go);
             return r;
@@ -338,24 +351,60 @@ namespace Hitman
             to.quality = from.quality;
         }
 
-        // Our bone with the same name (or the nearest named ancestor's, for extra bones we don't have).
-        Transform Bone(Transform src, float k)
+        // Our bone with the same name (or the nearest named ancestor's, for extra bones we don't have). Parts whose
+        // bones were rigged pointing other ways (Remy's) get a turn on top, so they sit on us the way they sat on
+        // them: the part's bind pose for the bone against our body's.
+        Transform Bone(Transform src, float k, Quaternion? srcBind)
         {
             for (var b = src; b != null; b = b.parent)
-                if (_bones.TryGetValue(Strip(b.name), out var t)) return Mathf.Abs(k - 1) < 0.03f ? t : Proxy(t, k);
+                if (_bones.TryGetValue(Strip(b.name), out var t))
+                {
+                    var turn = Quaternion.identity;
+                    if (b == src && srcBind.HasValue && _bind.TryGetValue(Strip(b.name), out var ours))
+                        turn = Quaternion.Inverse(ours) * srcBind.Value;
+                    if (b == src && FitHead(b, ref turn, ref k)) return Proxy(t, k, turn);
+                    if (Quaternion.Angle(turn, Quaternion.identity) < 1f) turn = Quaternion.identity;
+                    return Mathf.Abs(k - 1) < 0.03f && turn == Quaternion.identity ? t : Proxy(t, k, turn);
+                }
             return _model;
         }
 
-        static Transform Proxy(Transform bone, float k)
+        // Hair and hats: heads are rigged differently (where the head bone sits in the skull, how long the skull is),
+        // so line up their head-to-crown line with ours and size it to match.
+        bool FitHead(Transform src, ref Quaternion turn, ref float k)
         {
-            var name = "~x" + k.ToString("0.000");
+            var name = Strip(src.name);
+            bool top = name == "HeadTop_End";
+            if (name != "Head" && !top) return false;
+            var srcHead = top ? src.parent : src;
+            Transform srcTop = null;
+            if (srcHead != null) foreach (Transform c in srcHead) if (Strip(c.name) == "HeadTop_End") srcTop = c;
+            if (srcTop == null || !_bones.TryGetValue("HeadTop_End", out var ourTop) || srcTop.localPosition.sqrMagnitude < 1e-8f) return false;
+            // (for the crown bone: back to the head's turn, fitted, then on to the crown again)
+            var headTurn = top ? ourTop.localRotation * turn * Quaternion.Inverse(srcTop.localRotation) : turn;
+            var a = srcTop.localPosition;
+            var b = ourTop.localPosition;
+            var fit = Quaternion.FromToRotation(headTurn * a, b) * headTurn;
+            k = (k + b.magnitude / a.magnitude) / 2;                             // (halfway to the skull's size: snug)
+            turn = top ? Quaternion.Inverse(ourTop.localRotation) * fit * srcTop.localRotation : fit;
+            return true;
+        }
+
+        static Transform Proxy(Transform bone, float k, Quaternion turn)
+        {
+            var e = turn.eulerAngles;
+            var name = "~x" + k.ToString("0.000") + (turn == Quaternion.identity ? "" : $"r{e.x:0}_{e.y:0}_{e.z:0}");
             var p = bone.Find(name);
             if (p != null) return p;
             p = new GameObject(name).transform;
             p.SetParent(bone, false);
+            p.localRotation = turn;
             p.localScale = Vector3.one * k;
             return p;
         }
+
+        // Our body's bind pose: each bone's rotation (in the model's space) when the body was rigged.
+        readonly Dictionary<string, Quaternion> _bind = new Dictionary<string, Quaternion>();
 
         static string Strip(string n)
         {

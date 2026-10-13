@@ -43,17 +43,22 @@ namespace Hitman
         public int TipPrice => tipPrice;
 
         Transform _plate;
+        [Tooltip("Kevin's breakfast: how far in front of his seat, and how high (the booth table top).")]
+        [SerializeField] float plateReach = 0.55f, plateHeight = 0.79f;
         int _lastStep = -1;
         float _gasClock, _playerGas;
         readonly List<Setup> _windows = new List<Setup>();
+        readonly Dictionary<Setup, Vector3> _sashHome = new Dictionary<Setup, Vector3>();
+        const float SashLift = 0.48f;
         readonly List<Setup> _cards = new List<Setup>();
-        [Tooltip("When the office worker's keycard is left on the coffee shop table (24h).")]
+        [Tooltip("When the office worker's keycard is left on the mall table (24h).")]
         [SerializeField] Vector2 cardLeftOut = new Vector2(8.5f, 11f);
 
         void Awake() => I = this;
 
         void Start()
         {
+            if (target != null && target.GetComponent<KevinChat>() == null) target.gameObject.AddComponent<KevinChat>();   // (coworkers chat)
             var g = Game.I;
             g.DayStarted += OnDayStarted;
             g.Restored += ApplyWorld;
@@ -76,8 +81,10 @@ namespace Hitman
 
         // ---------- Time ----------
 
-        void Update()
+        // Run by the game clock (each slice of a fast-forward too), not once per frame.
+        public void Simulate(float gameMinutes)
         {
+            _slice = gameMinutes;
             var g = Game.I;
             if (g == null || !g.ClockRunning || target == null) return;
             var st = g.S;
@@ -93,7 +100,7 @@ namespace Hitman
                 g.Note("tip.breakfast", "Tip: he has a few drinks with his breakfast before he reports to work.", NoteKind.Tip);
             }
 
-            // Someone forgets their keycard on the coffee shop table every morning (until you take it once).
+            // Someone forgets their keycard on a mall table every morning (until you take it once).
             bool cardOut = !st.Has("card.taken") && Hours(g) >= cardLeftOut.x && Hours(g) < cardLeftOut.y;
             foreach (var c in _cards) if (c.gameObject.activeSelf != cardOut) c.gameObject.SetActive(cardOut);
 
@@ -167,7 +174,8 @@ namespace Hitman
 
         static float Abs(Game g) => (g.Day - 1) * 24 * 60 + g.Minutes;
         static float Hours(Game g) => g.Minutes / 60f;
-        static float Dt(Game g) => Time.deltaTime * g.MinutesPerRealSecondNow;
+        float _slice;
+        float Dt(Game g) => _slice;            // game minutes in this slice of the clock
         bool InHouse(RoutineCharacter c) => System.Array.IndexOf(houseAreas, c.AreaId) >= 0;
         bool AllWindowsShut() { foreach (var w in _windows) if (Game.I.S.Has("open." + w.name)) return false; return true; }
 
@@ -279,15 +287,29 @@ namespace Hitman
                     break;
                 }
                 case Setup.Kind.Bartender:
-                    if (!st.Has(Today("job")) && Hours(g) < shift.y)
-                        m.Add("Ask about part-time work", () => g.UI.ShowDialog("Bartender",
-                            "Part-time? I could use someone on the lunch rush. 12:30 till 2, twenty bucks.",
+                    if (BarShift.Working) { g.UI.BarShift.AddPourActions(m); break; }
+                    // The lunch shift: every day, a little serving game (and a way to get at Kevin's food).
+                    if (!st.Has(Today("job.paid")) && Hours(g) < shift.y && !BarShift.Working)
+                        m.Add("Work the lunch shift (12:30-14:00)", () => g.UI.ShowDialog("Bartender",
+                            "The lunch rush? Sure. Take their orders at the tables - remember what they want - pour it here and take it over. Quick service, good tips. Ask twice and they won't tip. Twenty bucks plus whatever you make.",
                             new List<(string, System.Action)>
                             {
-                                ("I'll take it.", () => { st.Set(Today("job")); g.Note("bar.job", "Got a lunch shift at the Corner Bar (12:30-14:00). Kevin eats lunch there."); }),
+                                ("Let's go.", () =>
+                                {
+                                    g.Note("bar.job", "I can work the lunch shift at the Corner Bar any day (12:30-14:00). Kevin eats lunch there.");
+                                    var spot = BehindBar(s.transform);
+                                    float wait = shift.x * 60 - g.Minutes;
+                                    if (wait > 1) g.FastForward(wait, "Waiting for the lunch rush", () => g.UI.BarShift.Begin(spot, shift, shiftPay));
+                                    else g.UI.BarShift.Begin(spot, shift, shiftPay);
+                                }),
                                 ("Maybe another time.", null),
                             }, s.transform));
                     m.AddWalk("Buy a beer ($3)", () => { if (g.Spend(3)) g.UI.Toast("You nurse a beer at the bar."); });
+                    // Proper meals: they keep you going far longer than a bowl of cereal.
+                    var bar = s.GetComponentInParent<Interior>();
+                    m.AddWalk("Burger and fries ($8) - full for hours", () => Actions.MealAtTable("a burger and fries", 8, 5, bar));
+                    m.AddWalk("Bowl of chili ($7)", () => Actions.MealAtTable("a bowl of chili", 7, 4, bar));
+                    m.AddWalk("Club sandwich ($6)", () => Actions.MealAtTable("a club sandwich", 6, 3, bar));
                     break;
                 case Setup.Kind.MopBucket:
                     if (!st.Holding("mop")) m.AddWalk("Take the mop", () => { Act("Picking Up Object"); g.Give("mop"); });
@@ -361,9 +383,26 @@ namespace Hitman
                     if (!st.Has("card.taken")) m.AddWalk("Pocket the keycard", () => { Act("Picking Up Object"); if (g.Give("keycard")) { st.Set("card.taken"); ApplyWorld(); } });
                     break;
                 case Setup.Kind.Receptionist:
-                    m.Add("Ask about the job ad", () => g.UI.ShowDialog("Receptionist",
-                        g.S.Has($"pass.{g.Day}") ? "The manager's running late. Have a seat. Help yourself to coffee in the break room."
-                                                 : "Do you have an appointment?", new List<(string, System.Action)> { ("OK", null) }, s.transform));
+                    if (st.Has("office.hired")) { m.Add("Say hello", () => g.UI.ShowDialog("Receptionist", "Morning! Your desk's the empty cabin at the back.", new List<(string, System.Action)> { ("Thanks.", null) }, s.transform)); break; }
+                    m.Add("Ask about the job ad", () =>
+                    {
+                        if (!g.S.Has($"pass.{g.Day}") && !g.S.Has("jobad"))
+                        {
+                            g.UI.ShowDialog("Receptionist", "Do you have an appointment?", new List<(string, System.Action)> { ("OK", null) }, s.transform);
+                            return;
+                        }
+                        // the interview, such as it is
+                        g.UI.ShowDialog("Receptionist", "The ad! Great. Can you type? Can you sit at a desk from nine to five without stealing the staplers? You're hired. Start whenever - your desk's the empty cabin at the back.",
+                            new List<(string, System.Action)>
+                            {
+                                ("\"Wonderful.\"", () =>
+                                {
+                                    st.Set("office.hired");
+                                    g.Note("office.hired", "Hired at the paper company (Schrute Towers, 5th floor). I can come and go, and work my desk for pay. Kevin sits a few desks over.");
+                                    g.Changed();
+                                }),
+                            }, s.transform);
+                    });
                     break;
             }
         }
@@ -372,6 +411,7 @@ namespace Hitman
         public void AddPocketActions(string item, List<(string, System.Action)> list)
         {
             var g = Game.I;
+            if (Shop.CanPutBack(item)) list.Add(("Put it back on the shelf", () => Shop.PutBackOne(item)));
             if (item == "takeout" && g.S.Holding("poison"))
                 list.Add(("Mix the rat poison in", () =>
                 {
@@ -398,7 +438,22 @@ namespace Hitman
 
         static void Act(string clip) => Game.I.Player.GetComponent<PlayerController>().Act(clip);
 
-        void Serve(bool poisoned)
+        Transform _behindBar;
+
+        // Where the player stands for the shift: beside the bartender, behind the counter.
+        Transform BehindBar(Transform bartender)
+        {
+            if (_behindBar == null)
+            {
+                _behindBar = new GameObject("Bar Shift Spot").transform;
+                _behindBar.SetParent(bartender.parent, false);
+            }
+            _behindBar.position = bartender.position + bartender.right * 1.1f;
+            _behindBar.rotation = bartender.rotation;
+            return _behindBar;
+        }
+
+        public void Serve(bool poisoned)
         {
             var g = Game.I;
             Act("Putting Down");
@@ -417,7 +472,15 @@ namespace Hitman
         void ApplyWorld()
         {
             var st = Game.I.S;
-            foreach (var w in _windows) if (w.Pane != null) w.Pane.enabled = !st.Has("open." + w.name);
+            // Windows are sash windows: open, the lower sash is pushed up (and the gap shows the garden).
+            foreach (var w in _windows)
+            {
+                if (w.Pane == null) continue;
+                var sash = w.Pane.transform;
+                if (!_sashHome.TryGetValue(w, out var home)) _sashHome[w] = home = sash.localPosition;
+                sash.localPosition = home + (st.Has("open." + w.name) ? sash.parent.InverseTransformVector(Vector3.up * SashLift) : Vector3.zero);
+                w.Pane.enabled = true;
+            }
 
         }
 
@@ -429,7 +492,7 @@ namespace Hitman
             var go = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
             go.name = "Kevin's breakfast";
             go.transform.SetParent(stool.transform.parent, true);
-            go.transform.position = stool.transform.position + stool.transform.forward * 0.55f + Vector3.up * 1.14f;
+            go.transform.position = stool.transform.position + stool.transform.forward * plateReach + Vector3.up * plateHeight;
             go.transform.localScale = new Vector3(0.28f, 0.012f, 0.28f);
             var mr = go.GetComponent<MeshRenderer>();
             var mat = new Material(Shader.Find("Universal Render Pipeline/Lit")) { color = new Color(0.92f, 0.9f, 0.85f) };
@@ -624,25 +687,30 @@ namespace Hitman
                 float day0 = (d - 1) * 1440;
                 // Kevin, while he's around to ping
                 void K(float minute, string text, string noteId = null, string note = null) { if (day0 + minute < deadAt) Add(KevinP, d, minute, text, noteId, note); }
-                K(8 * 60 + 40, d % 2 == 1 ? "Shower, then beer. In that order. Mostly." : "Monday again? Feels like a Monday.");
+                K(8 * 60 + 8, d % 2 == 1 ? "Shower, then beer. In that order. Mostly." : "Monday again? Feels like a Monday.");
                 K(9 * 60 + 6, "Beer and eggs at the Corner Bar. Breakfast of champions. #CornerBar", "ping.breakfast",
                   "Kevin pings that he has beer and eggs at the Corner Bar every morning around 9.");
                 K(11 * 60 + 34, "Fell asleep at my desk. Oscar woke me up by dropping a stapler. Rude.", "ping.asleep",
                   "Kevin falls asleep at his desk late in the morning (Oscar wakes him up).");
-                K(13 * 60 + 4, "Lunch at the Corner Bar w/ Oscar. 4 beers, he had water. Who raised him?", "ping.lunch",
+                K(13 * 60 + 18, "Lunch at the Corner Bar w/ Oscar. 4 beers, he had water. Who raised him?", "ping.lunch",
                   "Kevin has lunch at the Corner Bar around 13:00 - four beers.");
-                K(15 * 60 + 33, "Office coffee tastes like the break room smells. Still drinking it.", "ping.coffee",
+                K(15 * 60 + 36, "Office coffee tastes like the break room smells. Still drinking it.", "ping.coffee",
                   "Kevin drinks the break room coffee every afternoon around 15:30.");
-                K(19 * 60 + 12, "Large chili from Kensington Takeout. They don't even ask for my order anymore.", "ping.takeout",
-                  "Kevin gets chili delivered from Kensington Takeout every evening around 19:00.");
+                K(19 * 60 + 28, "Large chili from Kensington Takeout. They don't even ask for my order anymore.", "ping.takeout",
+                  "Kevin gets chili delivered from Kensington Takeout every evening around 19:15.");
                 K(22 * 60 + 25, "Couch. Beer. TV. Don't wake me.", "ping.couch", "Kevin passes out on his couch around 22:30.");
+                // The coffee chain went bust: every cafe in town is shut.
+                Add(Locals[2], d, 7 * 60 + 45, d == 1
+                        ? "Daily Grind went BANKRUPT?? The Shackleton cafe, the one on 5th, the mall counter - all closed for good. Where am I supposed to get coffee now"
+                        : "Walked past the old Daily Grind again. Still boarded up. Still bankrupt. Still no coffee. #RIP",
+                    "ping.cafes", "The Daily Grind coffee chain went bankrupt: every cafe in town (Shackleton Ave, the Business District, the mall) is closed for good.");
                 // Pam and her keycard (the forgotten card event)
                 if (!st.Has("card.taken"))
-                    Add(PamP, d, 8 * 60 + 52, "Left my Schrute Towers keycard on a table at the coffee shop AGAIN. Every. Single. Morning. #help",
-                        "ping.keycard", "Someone (Pam) keeps leaving her Schrute Towers keycard on a table at the Business District coffee shop in the mornings.");
+                    Add(PamP, d, 8 * 60 + 52, "Left my Schrute Towers keycard on a table at the mall food court AGAIN. Every. Single. Morning. #help",
+                        "ping.keycard", "Someone (Pam) keeps leaving her Schrute Towers keycard on a table in the Business District mall in the mornings.");
                 else Add(PamP, d, 9 * 60 + 30, "Lost my keycard for good this time. Security is NOT happy with me.");
                 if (day0 + 11 * 60 + 31 < deadAt) Add(OscarP, d, 11 * 60 + 31, "Woke Kevin up. Again.");
-                if (day0 + 15 * 60 + 36 < deadAt) Add(OscarP, d, 15 * 60 + 36, "Someone needs to clean the coffee machine on 5.");
+                if (day0 + 15 * 60 + 38 < deadAt) Add(OscarP, d, 15 * 60 + 38, "Someone needs to clean the coffee machine on 5.");
                 // the locals
                 var rng = new System.Random(d * 977);
                 for (float m = 7 * 60 + 20; m < 23 * 60; m += 70 + rng.Next(0, 60))
@@ -702,6 +770,10 @@ namespace Hitman
             else if (q.Contains("schrute") || q.Contains("paper"))
                 list.Add(new Article { headline = "Schrute Towers - visitor information", body = "All visitors must show a keycard at security. Business attire expected." ,
                     noteId = "web.schrute", note = "Schrute Towers security lets you in with a keycard - or if you look the part (business attire)." });
+            else if (q.Contains("cafe") || q.Contains("café") || q.Contains("coffee") || q.Contains("daily grind"))
+                list.Add(new Article { headline = "Daily Grind Coffee Co. files for bankruptcy - all locations closed for good",
+                    body = "The city's only coffee chain has shut its doors. The Shackleton Ave cafe, the Business District coffee shop and the mall counter will not reopen. \"We just couldn't make the numbers work,\" said the owner.",
+                    noteId = "web.cafes", note = "Every cafe in town (Daily Grind) is closed for good - the chain went bankrupt." });
             else if (q.Contains("poison"))
                 list.Add(new Article { headline = "Shop n Save - pest control aisle", body = "Rat poison, $6. Shackleton Ave branch." });
             else

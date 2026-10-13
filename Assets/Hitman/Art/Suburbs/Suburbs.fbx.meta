@@ -67,6 +67,11 @@ ModelImporter:
   - first:
       type: UnityEngine:Material
       assembly: UnityEngine.CoreModule
+      name: M_Shk_Brownstone
+    second: {fileID: 2100000, guid: 6a55f833874d1cf2f9a77297e3459ace, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
       name: M_Shk_Cabinet
     second: {fileID: 2100000, guid: ba8fe9c8a04c7c4c28ba3074b9adc140, type: 2}
   - first:

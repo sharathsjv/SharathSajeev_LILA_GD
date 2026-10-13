@@ -742,3 +742,154 @@ def skyline(name, inner, seed=7):
         B.box(cx - w / 2, cx + w / 2, cy - d / 2, cy + d / 2, 0, h, m, tile=3.0)
         B.box(cx - w / 2 + 1.5, cx + w / 2 - 1.5, cy - d / 2 + 1.5, cy + d / 2 - 1.5, h, h + r.uniform(3, 9), m, tile=3.0)
     return B.done()
+
+
+def brownstone_row(key, src, street, floors=4, stoop=1.8, unit=4.6):
+    """A row of brownstones (the doc's upkeep-property reference): reddish sandstone, a stoop with iron railings up
+    to a raised parlour floor, bay windows on alternate houses, window boxes and a heavy cornice."""
+    KEPT = ["WinCurtain", "WinCurtain", "WinPunch", "WinPunchLit", "WinDark"]         # kept up: no boards
+    x0, x1 = src["min"][0], src["max"][0]
+    y0, y1 = src["min"][2], src["max"][2]
+    fh, parlour = 3.1, 1.5
+    top = parlour + fh * floors
+    B = Builder("Bldg_" + key, ((x0 + x1) / 2, (y0 + y1) / 2, 0))
+    B.box(x0, x1, y0, y1, 0, top, "Brownstone")
+    B.box(x0 - 0.3, x1 + 0.3, y0 - 0.3, y1 + 0.3, top - 0.6, top, "WoodDarkPolish")             # cornice
+    B.box(x0 - 0.15, x1 + 0.15, y0 - 0.15, y1 + 0.15, top - 0.8, top - 0.6, "Brownstone")
+    faces = [Face("x", x1, 1, y0, y1), Face("x", x0, -1, y0, y1), Face("y", y1, 1, x0, x1), Face("y", y0, -1, x0, x1)]
+    F = pick_face(faces, street)
+    stoops = Builder("Prop_Stoops_" + key, ((x0 + x1) / 2, (y0 + y1) / 2, 0))
+    rails = Builder("NoCol_Railings_" + key, ((x0 + x1) / 2, (y0 + y1) / 2, 0))
+    n = max(1, int((F.a1 - F.a0) // unit))
+    w = (F.a1 - F.a0) / n
+    for u in range(n):
+        a0 = F.a0 + u * w
+        door = a0 + 1.1
+        win = (a0 + 2.2, a0 + w - 0.4)
+        F.box(B, a0 - 0.05, a0 + 0.05, 0, top - 0.8, 0, 0.1, "LimestoneDark")                    # party-wall line
+        # garden level: windows under the stoop's landing
+        F.box(B, win[0] + 0.2, win[1] - 0.2, 0.3, 1.2, 0, 0.04, rng.choice(KEPT))
+        # the stoop: steps out to the sidewalk, sandstone cheek walls, iron rails
+        steps = 7
+        for k in range(steps):
+            d1 = stoop - k * (stoop - 0.6) / steps
+            F.box(stoops, door - 0.6, door + 0.6, 0, parlour * (k + 1) / steps, 0, d1, "Brownstone")
+        for side in (-1, 1):
+            F.box(stoops, door + side * 0.62 - 0.1, door + side * 0.62 + 0.1, 0, parlour + 0.3, 0, stoop, "Brownstone")
+            for k in range(5):
+                d = 0.3 + k * (stoop - 0.4) / 4
+                F.box(rails, door + side * 0.62 - 0.02, door + side * 0.62 + 0.02, parlour + 0.3, parlour + 1.2 - k * 0.12, d, d + 0.04, "MetalDark")
+            F.box(rails, door + side * 0.62 - 0.03, door + side * 0.62 + 0.03, parlour + 1.15, parlour + 1.2, 0.2, stoop, "MetalDark")
+        # front door with a hood
+        F.box(B, door - 0.5, door + 0.5, parlour, parlour + 2.4, 0, 0.06, rng.choice(["WoodDarkPolish", "DoorGreen"]))
+        F.box(B, door - 0.75, door + 0.75, parlour + 2.45, parlour + 2.75, 0, 0.45, "WoodDarkPolish")
+        wall_bulb(f"LightSrc_Bulb_{key}{u}", F, door + 0.75, parlour + 2.0)
+        # upper floors: a bay on alternate houses, two tall windows otherwise
+        bay = u % 2 == 0
+        for f in range(floors):
+            z = parlour + f * fh
+            if bay:
+                F.box(B, win[0], win[1], z + 0.1, z + fh, 0, 0.55, "Brownstone")
+                F.box(B, win[0] + 0.2, win[1] - 0.2, z + 0.6, z + 2.5, 0.55, 0.59, rng.choice(KEPT))
+            else:
+                for c in (win[0] + 0.5, win[1] - 0.5):
+                    F.box(B, c - 0.4, c + 0.4, z + 0.6, z + 2.5, 0, 0.04, rng.choice(KEPT))
+                    F.box(B, c - 0.5, c + 0.5, z + 2.5, z + 2.7, 0, 0.12, "LimestoneDark")       # lintel
+                    if f == 0 and rng.random() < 0.6:                                               # window box
+                        F.box(B, c - 0.45, c + 0.45, z + 0.35, z + 0.6, 0, 0.3, "WoodDarkPolish")
+                        F.box(B, c - 0.42, c + 0.42, z + 0.6, z + 0.8, 0.02, 0.28, "Hedge")
+    stoops.done()
+    rails.done()
+    return B.done(), top
+
+
+def barricade(name, x, y, along_y=False, length=1.8):
+    """A striped road-closed sawhorse: where the player's part of the city ends."""
+    B = Builder(name, (x, y, 0))
+    h = length / 2
+    def bx(a0, a1, d0, d1, z0, z1, m):
+        if along_y: B.box(x + d0, x + d1, y + a0, y + a1, z0, z1, m)
+        else: B.box(x + a0, x + a1, y + d0, y + d1, z0, z1, m)
+    for side in (-1, 1):                                     # A-frame legs
+        a = side * (h - 0.15)
+        bx(a - 0.04, a + 0.04, -0.3, -0.24, 0, 1.0, "Steel")
+        bx(a - 0.04, a + 0.04, 0.24, 0.3, 0, 1.0, "Steel")
+    k, a = 0, -h
+    while a < h - 0.01:                                      # the striped boards
+        a2 = min(a + 0.3, h)
+        for z0 in (0.75, 0.4):
+            bx(a, a2, -0.04, 0.04, z0, z0 + 0.22, "CarRed" if k % 2 == 0 else "LineWhite")
+        a, k = a2, k + 1
+    return B.done()
+
+
+def barricades(prefix, x0, x1, y, along_y=False):
+    """A line of sawhorses across a road from x0 to x1 (or along Y when along_y), at y (or x)."""
+    n, a = 0, x0 + 0.9
+    while a <= x1 - 0.8:
+        n += 1
+        if along_y: barricade(f"NoCol_{prefix}{n}", y, a, along_y=True)
+        else: barricade(f"NoCol_{prefix}{n}", a, y)
+        a += 2.0
+
+
+def ext_row(prefix, axis, a0, a1, front, street, depth=10.0, facades=("BrickClean",), clean=True, floors=(3, 6),
+            brownstones=0.0):
+    """Filler past the edge of the playable street (so the city doesn't just stop): a row of buildings along an
+    extended road. axis "y": the row runs along Y and street = +1/-1 (road on the +X/-X side, front at X = front);
+    axis "x": the row runs along X and street = "N"/"S" (road to the north/south, front at Y = front)."""
+    a, k = a0, 0
+    while a1 - a > 4.0:
+        w = min(a1 - a, rng.uniform(8.0, 12.0))
+        if axis == "y":
+            xa, xb = sorted((front, front - street * depth))
+            src = {"min": [xa, 0, a], "max": [xb, 0, a + w]}
+        else:
+            ya, yb = sorted((front, front + (-depth if street == "N" else depth)))
+            src = {"min": [a, 0, ya], "max": [a + w, 0, yb]}
+        k += 1
+        key = f"Ext{prefix}{k}"
+        if rng.random() < brownstones: brownstone_row(key, src, street, floors=int(rng.integers(3, 5)))
+        else: building(key, src, int(rng.integers(floors[0], floors[1] + 1)), str(rng.choice(list(facades))), street, clean=clean)
+        a += w + 0.2
+
+
+WIDEN = 1.4          # how much wider the streets are (road + sidewalks), between the building lines
+
+
+def warp_offset(v, zones):
+    """How far a coordinate moves when the street zones (centre, half-width, factor) are widened: inside a zone it
+    stretches about the centre; beyond it everything shifts out by the zone's extra width."""
+    off = 0.0
+    for c, h, k in zones:
+        d = v - c
+        if d > h: off += h * (k - 1)
+        elif d < -h: off -= h * (k - 1)
+        else: off += d * (k - 1)
+    return off
+
+
+def warp_scene(zones_x=(), zones_y=(), rigid=3.0):
+    """Widen the streets after building: big things (roads, sidewalks, buildings) are warped vertex by vertex;
+    small things (lamps, benches, trees, signs, barricades) move whole so they keep their shape."""
+    import bpy
+    from mathutils import Vector
+    bpy.context.view_layer.update()            # (new objects' world matrices aren't computed until this)
+    for ob in bpy.data.objects:
+        if ob.type != "MESH": continue
+        mw = ob.matrix_world
+        pts = [mw @ Vector(c) for c in ob.bound_box]
+        xs = [p.x for p in pts]; ys = [p.y for p in pts]
+        small_x = (max(xs) - min(xs)) < rigid
+        small_y = (max(ys) - min(ys)) < rigid
+        cx, cy = (max(xs) + min(xs)) / 2, (max(ys) + min(ys)) / 2
+        dx_rigid = warp_offset(cx, zones_x) if small_x else 0.0
+        dy_rigid = warp_offset(cy, zones_y) if small_y else 0.0
+        inv = mw.inverted()
+        me = ob.data
+        for v in me.vertices:
+            w = mw @ v.co
+            w.x += dx_rigid if small_x else warp_offset(w.x, zones_x)
+            w.y += dy_rigid if small_y else warp_offset(w.y, zones_y)
+            v.co = inv @ w
+        me.update()

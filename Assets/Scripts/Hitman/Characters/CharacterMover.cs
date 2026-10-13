@@ -14,7 +14,33 @@ namespace Hitman
         [SerializeField] float walkAnimSpeed = 1.55f;
 
         public bool Moving => _target != null;
-        public bool Seated { get; set; }
+        // Sitting down: at a computer that's the typing pose, anywhere else (couches, benches, the barber's chair)
+        // just sitting, unless a pose is set.
+        public bool Seated
+        {
+            get => _seated;
+            set
+            {
+                bool sitting = value && !_seated;
+                _seated = value;
+                if (sitting && _pose == null && !NearComputer()) SetPose("Sitting Idle");
+            }
+        }
+        bool _seated;
+
+        static readonly string[] ComputerWords = { "Laptop", "Computer", "Monitor", "Keyboard", "PC", "Typewriter", "Till", "Register" };
+
+        bool NearComputer()
+        {
+            int n = Physics.OverlapSphereNonAlloc(transform.position + Vector3.up * 0.8f, 1.1f, _near);
+            for (int i = 0; i < n; i++)
+            {
+                if (_near[i].transform.IsChildOf(transform)) continue;
+                var name = _near[i].name;
+                foreach (var w in ComputerWords) if (name.Contains(w)) return true;
+            }
+            return false;
+        }
         // Moves and animates in real time even while the world is in slow motion (the player's last-chance blend-in).
         public bool Unscaled
         {
@@ -29,6 +55,9 @@ namespace Hitman
         // A held pose from the AnimLibrary (e.g. "Sitting Drinking"), or null for the normal idle / typing.
         public string Pose => _pose;
         public float WalkSpeed { get => walkSpeed; set => walkSpeed = value; }
+        // Walk slower or faster than usual (keeping pace behind someone being followed). The walk cycle plays at the
+        // matching rate.
+        public float SpeedScale { get; set; } = 1f;
 
         readonly Queue<Vector3> _path = new Queue<Vector3>();
         static NavMeshPath _navPath;
@@ -118,7 +147,12 @@ namespace Hitman
             if (_override == null || clip == null || !_actParam) return;
             _override[lib.actionPlaceholder] = clip;
             _animator.SetTrigger("Act");
+            _actingUntil = Time.time + clip.length;
         }
+
+        // In the middle of a one-off move (the player stays put until it's done).
+        public bool Acting => Time.time < _actingUntil;
+        float _actingUntil;
 
         // Walk with a different walk cycle (texting, carrying a bag); null = the normal walk.
         public void SetWalk(string clipName)
@@ -137,6 +171,9 @@ namespace Hitman
 
         public void WalkTo(Vector3 target, Action onArrive = null)
         {
+            // The player stops at the edge of their part of the district (the barricades).
+            var g = Game.I;
+            if (g != null && g.Player == this && g.Current != null) target = g.Current.ClampToBounds(target, 0.3f);
             Seated = false;
             ClearPose();
             _onArrive = onArrive;
@@ -154,9 +191,25 @@ namespace Hitman
             }
             else if (!haveStart) _path.Enqueue(Flat(target));
 
+            // The path starts where we stand: skip that corner, or a new tap mid-walk stalls for a frame and the walk
+            // cycle starts over.
+            while (_path.Count > 1 && (_path.Peek() - transform.position).sqrMagnitude < 0.01f) _path.Dequeue();
             if (_path.Count == 0) { Arrive(); return; }
             _target = _path.Dequeue();
         }
+
+        // Step toward a point by a given distance, on game time (fast-forward / off-screen), walking as it goes.
+        public void Glide(Vector3 to, float step)
+        {
+            if (_target != null) Stop();
+            var pos = transform.position;
+            var next = Vector3.MoveTowards(pos, to, step);
+            if ((next - pos).sqrMagnitude > 1e-6f) Face(to);
+            transform.position = next;
+            _glide = walkSpeed;
+        }
+
+        float _glide;
 
         public void Stop()
         {
@@ -233,34 +286,71 @@ namespace Hitman
                 if (d < bestD) { bestD = d; best = c; }
             }
             if (best == null) return null;
-            // Where on it: as close to where we stand as fits (couches, benches), else its middle (chairs).
-            var b = best.bounds;
-            var p = transform.position;
-            float sx = Mathf.Max(0, b.extents.x - 0.25f), sz = Mathf.Max(0, b.extents.z - 0.25f);
-            var xz = new Vector3(Mathf.Clamp(p.x, b.center.x - sx, b.center.x + sx), 0, Mathf.Clamp(p.z, b.center.z - sz, b.center.z + sz));
-            float top = b.max.y;
-            if (best.Raycast(new Ray(new Vector3(xz.x, b.max.y + 0.2f, xz.z), Vector3.down), out var hit, b.size.y + 0.5f)) top = hit.point.y;
-            return new Vector3(xz.x, top + 0.07f, xz.z);
+            return SeatOn(best, transform.position);
+        }
+
+        // Where to sit on a seat: on its lowest flat part (the cushion, not a booth's or couch's back), in the middle
+        // of it across, and as close to where we stand as fits along it (couches, benches).
+        public static Vector3 SeatOn(Collider seat, Vector3 near)
+        {
+            var b = seat.bounds;
+            float step = Mathf.Max(0.04f, Mathf.Max(b.size.x, b.size.z) / 32f);
+            var hits = new List<Vector3>();
+            float low = float.MaxValue;
+            for (float x = b.min.x + step / 2; x < b.max.x; x += step)
+                for (float z = b.min.z + step / 2; z < b.max.z; z += step)
+                    if (seat.Raycast(new Ray(new Vector3(x, b.max.y + 0.2f, z), Vector3.down), out var h, b.size.y + 0.5f))
+                    {
+                        hits.Add(h.point);
+                        low = Mathf.Min(low, h.point.y);
+                    }
+            if (hits.Count == 0) return new Vector3(b.center.x, b.max.y + 0.07f, b.center.z);
+            // the cushion: everything near the lowest height
+            Vector3 all = Vector3.zero, close = Vector3.zero;
+            int nAll = 0, nClose = 0;
+            foreach (var h in hits)
+            {
+                if (h.y > low + 0.1f) continue;
+                all += h; nAll++;
+                var d = h - near; d.y = 0;
+                if (d.sqrMagnitude < 0.45f * 0.45f) { close += h; nClose++; }
+            }
+            var mid = all / nAll;
+            if (nClose > 0)
+            {
+                // along a long seat stay near where we are; across it, its middle
+                var c = close / nClose;
+                mid = b.size.x > b.size.z ? new Vector3(c.x, mid.y, mid.z) : new Vector3(mid.x, mid.y, c.z);
+                if (Mathf.Abs(b.size.x - b.size.z) < 0.2f) mid = all / nAll;          // (round/square seats: the middle)
+            }
+            return new Vector3(mid.x, low + 0.07f, mid.z);
         }
 
         void Update()
         {
             UndoShift();
             float moved = 0;
-            if (_target is Vector3 t)
+            if (_target != null)
             {
-                var pos = transform.position;
                 float dt = _unscaled ? Time.unscaledDeltaTime : Time.deltaTime;
-                var next = Vector3.MoveTowards(pos, t, walkSpeed * dt);
-                moved = (next - pos).magnitude / Mathf.Max(dt, 0.0001f);
-                Face(t);
-                transform.position = next;
-                if ((next - t).sqrMagnitude < 0.0004f)
+                float step = walkSpeed * SpeedScale * dt;
+                // Round corners without losing the rest of the step (a short step there reads as a stall).
+                while (_target is Vector3 t)
                 {
+                    var pos = transform.position;
+                    var next = Vector3.MoveTowards(pos, t, step);
+                    step -= (next - pos).magnitude;
+                    Face(t);
+                    transform.position = next;
+                    if ((next - t).sqrMagnitude >= 0.0004f) break;
                     if (_path.Count > 0) _target = _path.Dequeue();
-                    else Arrive();
+                    else { Arrive(); break; }
+                    if (step <= 0.0001f) break;
                 }
+                moved = _target != null ? walkSpeed * SpeedScale : 0;
             }
+            if (_target == null && _glide > 0) moved = _glide;                // (moved on game time by Glide)
+            _glide = 0;
             if (_animator == null) return;
             if (_speedParam) _animator.SetFloat("Speed", moved);
             if (_rateParam && moved > 0.1f) _animator.SetFloat("WalkRate", Mathf.Clamp(moved / walkAnimSpeed, 0.5f, 3f));

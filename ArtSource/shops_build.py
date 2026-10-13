@@ -190,20 +190,22 @@ def mall():
             else:
                 single(f"{name}Sign", (x0 + 1.0, x1 - 1.0, y + s * 0.2 - 0.04, y + s * 0.2 + 0.04, top + 0.3, top + 1.3, sign))
 
-    # top row: suit shop, closed, bar;  bottom row: closed, coffee, closed;  east: closed
+    # top row: suit shop, supermarket, bar;  bottom row: closed, coffee, barber;  east: closed
     front("Mall_FrontSuits", -W, -4.5, 5.0, True, "SignSuits")
-    front("Mall_FrontClosedN", -4.5, 4.5, 5.0, False, "SignClosed")
+    front("Mall_FrontClosedN", -4.5, 4.5, 5.0, True, "SignShopNSave")         # (a Shop n Save now)
     front("Mall_FrontBar", 4.5, W, 5.0, True, "SignBar")
     front("Mall_FrontClosedSW", -W, -4.5, -5.0, False, "SignClosed", s=1, low_front=True)
-    front("Mall_FrontCoffee", -4.5, 4.5, -5.0, True, "SignCoffee", s=1, low_front=True)
-    front("Mall_FrontClosedSE", 4.5, W, -5.0, False, "SignClosed", s=1, low_front=True)
+    front("Mall_FrontCoffee", -4.5, 4.5, -5.0, False, "SignCoffee", s=1, low_front=True)   # (Daily Grind: bankrupt, shuttered)
+    front("Mall_FrontClosedSE", 4.5, W, -5.0, True, "SignBarber", s=1, low_front=True)   # (a barber now)
     for x in (-4.5, 4.5):
         wall(f"Mall_SplitN{x:.0f}", "y", x, 5.0, D, H, "Limestone")
         wall(f"Mall_SplitS{x:.0f}", "y", x, -D, -5.0, H, "Limestone", low=True)
-    B = Builder("Mall_FrontClosedE", (9.0, 0, 0))                                           # east shop: shuttered
-    B.box(8.95, 9.05, -4.7, 4.7, 0, 4.0, "MetalWhite").box(8.85, 9.15, -5.0, 5.0, 4.0, H, "Limestone")
+    # east shop: shuttered, set well back so the whole of the bar's front opens onto the concourse
+    EX = 12.0
+    B = Builder("Mall_FrontClosedE", (EX, 0, 0))
+    B.box(EX - 0.05, EX + 0.05, -4.7, 4.7, 0, 4.0, "MetalWhite").box(EX - 0.15, EX + 0.15, -5.0, 5.0, 4.0, H, "Limestone")
     B.done()
-    single("Mall_FrontClosedESign", (8.75, 8.83, -2.0, 2.0, 4.3, 5.3, "SignClosed"))
+    single("Mall_FrontClosedESign", (EX - 0.25, EX - 0.17, -2.0, 2.0, 4.3, 5.3, "SignClosed"))
 
     # suit shop: racks of suits, mirror, counter
     for k, y in enumerate((6.4, 8.2)):
@@ -234,6 +236,33 @@ def mall():
         round_table(f"Mall_CoffeeTable{k}", x, -6.4, r=0.35)
         chair(f"Mall_CoffeeChair{k}", x, -7.0, (0, 1), seat="FabricBrown", frame="Steel")
 
+    # the Shop n Save, top middle: shelves of goods, fruit & veg, the drinks fridge, a till by the door
+    for k, x in enumerate((-3.2, -0.6)):
+        B = Builder(f"Mall_MarketShelf{k}", (x, 7.9, 0))
+        B.box(x - 0.35, x + 0.35, 6.2, 9.6, 0, 1.8, "ShelfGrey")
+        for side in (-1, 1): B.box(x + side * 0.36 - 0.02, x + side * 0.36 + 0.02, 6.25, 9.55, 0.15, 1.75, "Goods")
+        B.done()
+    B = Builder("Mall_MarketVeg", (1.6, 9.2, 0))
+    B.box(0.9, 2.3, 8.8, 9.7, 0, 0.7, "WoodOak").box(0.95, 2.25, 8.85, 9.65, 0.7, 0.75, "Produce")
+    B.done()
+    single("Mall_MarketFreezer", (3.4, 4.2, 8.6, 9.9, 0, 2.0, "Freezer"))
+    B = Builder("Mall_MarketTill", (2.6, 6.1, 0))
+    B.box(1.9, 3.4, 5.8, 6.4, 0, 0.95, "MetalWhite").box(1.85, 3.45, 5.75, 6.45, 0.95, 1.0, "Laminate")
+    B.box(2.9, 3.2, 6.0, 6.25, 1.0, 1.25, "BeigePlastic")
+    B.done()
+    # the barber, bottom right: two chairs facing a mirror, a pole outside
+    single("Mall_BarberMirror", (5.4, 12.6, -9.92, -9.88, 1.0, 2.2, "GlassOffice"))
+    single("Mall_BarberCounter", (5.4, 12.6, -9.9, -9.5, 0, 0.9, "Cabinet"))
+    for k, x in enumerate((7.0, 10.5)):
+        B = Builder(f"Mall_BarberChair{k}", (x, -8.6, 0))
+        B.cyl(x, -8.6, 0, 0.25, 0.4, "Chrome", seg=10)
+        B.box(x - 0.32, x + 0.32, -8.9, -8.3, 0.4, 0.62, "LeatherBlack").box(x - 0.32, x + 0.32, -8.3, -8.15, 0.62, 1.4, "LeatherBlack")
+        B.box(x - 0.36, x - 0.3, -8.9, -8.3, 0.62, 0.85, "Chrome").box(x + 0.3, x + 0.36, -8.9, -8.3, 0.62, 0.85, "Chrome")
+        B.done()
+    B = Builder("Mall_BarberPole", (12.4, -4.6, 0))
+    B.cyl(12.4, -4.6, 0, 0.12, 2.0, "BarberPole", seg=10)
+    B.done()
+
     # the concourse: fountain, food court, plastic trees, benches, hoardings, flags
     B = Builder("Mall_Fountain", (2.5, 0, 0))
     B.cyl(2.5, 0, 0, 2.0, 0.5, "MarbleDark", seg=16).cyl(2.5, 0, 0.5, 1.85, 0.02, "Water", seg=16)
@@ -261,7 +290,7 @@ def mall():
     bench("Mall_Bench2", 5.6, 0.0, along_y=True)
     for k, (x, poster) in enumerate([(-4.5, "PosterCola"), (4.5, "PosterSale")]):          # hoardings on the pillars
         single(f"Mall_Hoarding{k}", (x - 1.3, x + 1.3, 4.6, 4.66, 1.0, 3.6, poster))
-    single("Mall_HoardingE", (8.8, 8.84, -4.6, -2.6, 1.2, 3.4, "PosterFly"))
+    single("Mall_HoardingE", (EX - 0.2, EX - 0.16, -4.6, -2.6, 1.2, 3.4, "PosterFly"))
     single("Mall_HoardingW", (-12.86, -12.82, 4.8, 7.0, 3.0, 5.4, "PosterSale"))
     flags = Builder("NoCol_MallFlags", (0, 0, 5))
     for y in (-2.6, 2.6):

@@ -20,7 +20,7 @@ MonoBehaviour:
   standPose: Drunk Idle
   walk: 
   steps:
-  - time: 08:45
+  - time: 08:05
     place: suburbs.house4.shower
     activity: 7
     options: []
@@ -30,7 +30,7 @@ MonoBehaviour:
     opening: 0
     chatter: []
     overheard: 
-  - time: 09:00
+  - time: 08:20
     place: business.cornerbar.stool1
     activity: 4
     options: []
@@ -188,7 +188,7 @@ MonoBehaviour:
     opening: 2
     chatter: []
     overheard: 
-  - time: 14:35
+  - time: 14:40
     place: business.tower1.desk.kevin
     activity: 2
     options: []
@@ -230,7 +230,7 @@ MonoBehaviour:
     opening: 2
     chatter: []
     overheard: 
-  - time: 16:35
+  - time: 16:40
     place: business.tower1.desk.kevin
     activity: 2
     options: []
@@ -265,7 +265,7 @@ MonoBehaviour:
     options: []
     pose: 
     note: 'Home: takeout on the couch, keeps drinking.'
-    documented: Kevin eats takeout on his couch every evening - chili delivered around 19:00 - and keeps drinking.
+    documented: Kevin eats takeout on his couch every evening - chili delivered around 19:15 - and keeps drinking.
     opening: 5
     chatter:
     - Where's my chili? It's always here by now.

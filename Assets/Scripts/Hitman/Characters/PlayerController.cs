@@ -40,7 +40,7 @@ namespace Hitman
         void Start() => Game.I.Restored += () => { Locked = false; EndBlend(); };
 
         // Control taken away (being walked out by security).
-        public bool Locked { get; private set; }
+        public bool Locked { get; set; }
         // Doing something that fits in where they are (typing at a desk, getting coffee): restricted areas leave
         // them alone while they're at it. Cleared as soon as they walk off.
         public BlendSpot Blending { get; private set; }
@@ -98,6 +98,8 @@ namespace Hitman
             {
                 if (exact) transform.rotation = at.rotation;
                 else _mover.Face(at.position);
+                // Seats are off the walkable floor (a booth's bench, a couch): slide the last bit onto it.
+                if (exact && sit) transform.position = new Vector3(at.position.x, transform.position.y, at.position.z);
                 _mover.Seated = sit;
                 act?.Invoke();
             });
@@ -111,12 +113,13 @@ namespace Hitman
         }
 
         // Some static actions only make sense sometimes.
-        static bool Hidden(UseAction a)
+        public static bool Hidden(UseAction a)
         {
             var g = Game.I;
             switch (a.id)
             {
                 case "stock": return !g.S.Holding("food");
+                case "officework": return !g.S.Has("office.hired");
                 default: return false;
             }
         }
@@ -128,9 +131,13 @@ namespace Hitman
             var p = Pointer.current;
             if (p == null) return;
             var pos = p.position.ReadValue();
+            if (p.press.wasPressedThisFrame && g.AtDesk) { g.StopWork(); return; }       // a tap gets you up from the desk
             if (p.press.wasPressedThisFrame)
             {
-                _pressed = !OverUI(pos) && !g.Busy && !g.UI.Blocking;
+                bool overUI = OverUI(pos);
+                // A tap away from an open menu closes it and counts as a tap on the world.
+                if (!overUI && g.UI.MenuOpen && !g.UI.BlockingExceptMenu) g.UI.HideActions();
+                _pressed = !overUI && !g.Busy && !g.UI.Blocking && !_mover.Acting;   // (stay put mid-action)
                 _dragging = false;
                 _pressPos = _lastPos = pos;
             }
@@ -184,10 +191,16 @@ namespace Hitman
             if (pick < 0) return;
             var hit = _tapHits[pick];
 
+            // A customer during the bar shift: straight over to them.
+            var customer = hit.collider.GetComponentInParent<BarCustomer>();
+            if (customer != null) { customer.Tapped(this, pos); return; }
+
             var person = hit.collider.GetComponentInParent<RoutineCharacter>();
             if (person != null && person.Visible)
             {
+                if (Contract.I != null && person == Contract.I.Target) g.S.Set("target.tapped");
                 var menu = new ActionMenu(this, person.transform, person.Routine.displayName);
+                if (BarShift.Working) g.UI.BarShift.AddPersonActions(person, menu);
                 if (person.Alive)
                 {
                     if (Following != person) menu.Add($"Follow {person.Routine.displayName}", () => StartFollow(person));
@@ -215,11 +228,35 @@ namespace Hitman
                         menu.Items.Add((a.label, () => GoUse(usable, action)));
                     }
                 foreach (var src in sources) src.AddActions(menu);
+                // A shop shelf: put back anything you've picked up and not paid for yet.
+                if (usable != null && Array.Exists(usable.Actions, x => x.id == "take"))
+                    foreach (var item in Shop.Unpaid())
+                    {
+                        var it = item;
+                        menu.AddWalk($"Put back: {Items.Name(it)}", () => { _mover.PlayAction("Picking Up Object"); Shop.PutBackOne(it); });
+                    }
                 if (menu.Items.Count > 0) g.UI.ShowActions(menu.Title, menu.Items, pos);
                 return;
             }
 
-            // A building with nothing to use: offer to cross over to the sidewalk in front of it.
+            // The road: offer to cross to the other side of it (the only place "Cross street" appears).
+            if (IsRoad(hit.collider))
+            {
+                var rb = hit.collider.bounds;
+                var me = transform.position;
+                var spot = new Vector3(hit.point.x, 0, hit.point.z);
+                // across the road's narrow way, to the side away from the player
+                if (rb.size.x < rb.size.z) spot.x = me.x < rb.center.x ? rb.max.x + 1.0f : rb.min.x - 1.0f;
+                else spot.z = me.z < rb.center.z ? rb.max.z + 1.0f : rb.min.z - 1.0f;
+                if (NavMesh.SamplePosition(spot, out var nav, 2.5f, NavMesh.AllAreas))
+                {
+                    var acts = new List<(string, Action)> { ("Cross street", () => { if (Following != null) StopFollow(); EndBlend(); _mover.WalkTo(nav.position); }) };
+                    g.UI.ShowActions("Street", acts, pos);
+                }
+                return;
+            }
+
+            // A building with nothing to use: walk to the sidewalk in front of it.
             if (IsBuilding(hit.collider))
             {
                 var b = hit.collider.bounds;
@@ -234,8 +271,9 @@ namespace Hitman
                 else spot.z = (outward.z > 0 ? b.max.z : b.min.z) + outward.z * 1.2f;
                 if (NavMesh.SamplePosition(spot, out var nav, 2.5f, NavMesh.AllAreas))
                 {
-                    var acts = new List<(string, Action)> { ("Cross road", () => { if (Following != null) StopFollow(); _mover.WalkTo(nav.position); }) };
-                    g.UI.ShowActions(hit.collider.name, acts, pos);
+                    if (Following != null) StopFollow();
+                    EndBlend();
+                    _mover.WalkTo(nav.position);
                 }
                 return;
             }
@@ -254,6 +292,8 @@ namespace Hitman
             return System.Text.RegularExpressions.Regex.Replace(name, @"(?<=[a-z])(?=[A-Z])", " ");
         }
 
+        static bool IsRoad(Collider c) => c.name.StartsWith("Gnd_") && c.name.EndsWith("Road");
+
         static bool IsBuilding(Collider c) =>
             c.bounds.size.y >= 3f && c.TryGetComponent<Unity.AI.Navigation.NavMeshModifier>(out var m) && m.overrideArea && m.area == 1;
 
@@ -271,6 +311,16 @@ namespace Hitman
         {
             if (Following != null) StopFollow();
             EndBlend();
+            // Shop shelves: stand on the floor beside it (never in it), facing screen-left like the fridge.
+            if (a.id == "take" && u.StandPoint == null && ShelfSpot(u, out var stand, out var face))
+            {
+                _mover.WalkTo(stand, () =>
+                {
+                    transform.rotation = Quaternion.LookRotation(face);
+                    Perform(u, a);
+                });
+                return;
+            }
             var spot = u.StandPoint != null ? u.StandPoint : u.transform;
             _mover.WalkTo(spot.position, () =>
             {
@@ -291,6 +341,28 @@ namespace Hitman
             });
         }
 
+        bool ShelfSpot(Usable u, out Vector3 stand, out Vector3 face)
+        {
+            var cam = Game.I.Cam.transform;
+            face = -Vector3.ProjectOnPlane(cam.right, Vector3.up).normalized;      // screen-left
+            stand = default;
+            var col = u.GetComponentInChildren<Collider>();
+            var b = col != null ? col.bounds : new Bounds(u.transform.position, Vector3.one * 0.5f);
+            // the shelf's edge on the screen-right side, then half a metre out
+            var right = -face;
+            float reach = Mathf.Abs(right.x) * b.extents.x + Mathf.Abs(right.z) * b.extents.z;
+            var want = new Vector3(b.center.x, 0, b.center.z) + right * (reach + 0.55f);
+            var near = new Vector3(Mathf.Clamp(transform.position.x, b.min.x, b.max.x), 0, Mathf.Clamp(transform.position.z, b.min.z, b.max.z));
+            want += Vector3.ProjectOnPlane(near - new Vector3(b.center.x, 0, b.center.z), right);       // level with where you are along it
+            if (NavMesh.SamplePosition(want, out var hit, 0.6f, NavMesh.AllAreas)) { stand = hit.position; return true; }
+            // no room on that side: the nearest floor beside it, still facing it
+            if (!NavMesh.SamplePosition(new Vector3(b.center.x, 0, b.center.z), out hit, 2f, NavMesh.AllAreas)) return false;
+            stand = hit.position;
+            var to = new Vector3(b.center.x, 0, b.center.z) - new Vector3(stand.x, 0, stand.z);
+            if (to.sqrMagnitude > 0.01f) face = to.normalized;
+            return true;
+        }
+
         void Perform(Usable u, UseAction a)
         {
             var g = Game.I;
@@ -301,6 +373,7 @@ namespace Hitman
                 case "eat": Actions.Eat(a.arg); break;
                 case "stock": Actions.StockFridge(); break;
                 case "meal": Actions.Meal(a.arg); break;
+                case "closed": g.UI.Toast(string.IsNullOrEmpty(a.arg) ? "Closed for good." : a.arg); break;
                 case "search": g.UI.ShowSearch(); break;
                 case "loiter": _mover.SetPose("Sitting"); Actions.Loiter(u); break;
                 case "payphone": _mover.SetPose("Talking On Phone"); g.UI.ShowPhone(u.GetComponent<Payphone>()); break;
@@ -311,6 +384,7 @@ namespace Hitman
                 case "barber": g.UI.ShowBarber(); break;
                 case "suit": Actions.BuySuit(int.TryParse(a.arg, out var price) ? price : 12); break;
                 case "sleep": g.Sleep(); break;
+                case "officework": _mover.Seated = true; g.WorkAtDesk(); break;
                 case "subway": g.UI.ShowTravel(true); break;
                 case "taxi": g.UI.ShowTravel(false); break;
                 case "enter": if (Restricted.MayEnter(g.Area(a.arg) as Interior)) g.UseDoor(g.Area(a.arg) as Interior, true); break;
@@ -334,6 +408,7 @@ namespace Hitman
         public void StopFollow()
         {
             Following = null;
+            _mover.SpeedScale = 1;
             _mover.Stop();
             Game.I.Cam.Follow(transform);
             Game.I.UI.SetFollowing(null, 0);
@@ -355,22 +430,51 @@ namespace Hitman
             if (!t.InTransit && t.AreaId != g.Current.Id)
             {
                 var theirs = g.Area(t.AreaId);
-                void Resume() => g.Cam.Follow(transform, t.transform);
-                if (theirs is Interior into && into.Parent == null && into.Map == g.Current) g.UseDoor(into, true, Resume);
-                else if (g.Current is Interior here && here.Parent == null && theirs == here.Map) g.UseDoor(here, false, Resume);
-                else if (theirs is Interior upper && upper.Parent == g.Current) g.UseLink((Interior)g.Current, upper, Resume);
-                else if (g.Current is Interior floor && floor.Parent != null && theirs == floor.Parent) g.UseLink(floor, floor.Parent, Resume);
+                // One room at a time towards them (they may be a few rooms ahead): in, if they're somewhere inside
+                // this one; otherwise back out.
+                Interior inward = null;
+                for (var a = theirs as Interior; a != null; a = a.Outside as Interior)
+                    if (a.Outside == g.Current) { inward = a; break; }
+                var next = inward != null ? inward : (g.Current as Interior)?.Outside;
+                if (next == null || theirs.Map != g.Current.Map) return;
+                if (Suspicion.I != null && !Suspicion.I.MayFollow(g.Current, next)) { if (Following != null) StopFollow(); return; }
+                void Resume()
+                {
+                    g.Cam.Follow(transform, t.transform);
+                    // already walking after them as the picture fades back in
+                    if (t.GetComponent<CharacterMover>() is CharacterMover m && m.Moving) _mover.WalkTo(t.transform.position);
+                    _repath = 0.3f;
+                }
+                if (inward != null && inward.Parent == null) g.UseDoor(inward, true, Resume);
+                else if (inward != null) g.UseLink((Interior)g.Current, inward, Resume);
+                else if (((Interior)g.Current).Parent == null) g.UseDoor((Interior)g.Current, false, Resume);
+                else g.UseLink((Interior)g.Current, (Interior)next, Resume);
                 return;
             }
-            if (!t.Visible) return;   // e.g. in the shower: wait where you are
+            if (!t.Visible) { _mover.SpeedScale = 1; return; }   // e.g. in the shower: wait where you are
+
+            var toThem = t.transform.position - transform.position;
+            toThem.y = 0;
+            float gap = toThem.magnitude;
+            var legs = t.GetComponent<CharacterMover>();
+            bool walking = legs != null && legs.Moving;
+            if (walking)
+            {
+                // They're on the move: walk after them at their pace, a little quicker when dropping back and slower
+                // when catching up, so the walk never stops and starts. (Heading for where they are, not for a spot
+                // behind them that we'd reach and stop at.)
+                float pace = legs.WalkSpeed * legs.SpeedScale * (1 + Mathf.Clamp((gap - followDistance) * 0.45f, -0.7f, 0.6f));
+                _mover.SpeedScale = Mathf.Clamp(pace / Mathf.Max(0.1f, _mover.WalkSpeed), 0.3f, 1.5f);
+                if (gap < followDistance * 0.5f) { _mover.Stop(); return; }   // (bumped into them: wait for the gap)
+                if (!_mover.Moving) _repath = 0;                              // they've set off: so do we, right away
+            }
+            else _mover.SpeedScale = 1;
 
             _repath -= Time.deltaTime;
             if (_repath > 0) return;
             _repath = 0.3f;
-            var toThem = t.transform.position - transform.position;
-            toThem.y = 0;
-            float gap = toThem.magnitude;
-            if (Mathf.Abs(gap - followDistance) < 0.4f) { if (!t.GetComponent<CharacterMover>().Moving) _mover.Stop(); return; }
+            if (walking) { _mover.WalkTo(t.transform.position); return; }
+            if (Mathf.Abs(gap - followDistance) < 0.4f) { _mover.Stop(); return; }
             var goal = t.transform.position - toThem.normalized * followDistance;
             _mover.WalkTo(goal);
         }

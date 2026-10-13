@@ -17,7 +17,7 @@ namespace Hitman
         static readonly Color Pencil = new Color(0.35f, 0.38f, 0.5f);
         static readonly string[] TabNames = { "Notes", "My notes", "Pockets" };
         static readonly Color[] TabColours = { new Color(0.95f, 0.55f, 0.45f), new Color(0.55f, 0.75f, 0.95f), new Color(0.6f, 0.85f, 0.55f) };
-        const int FontSize = 26;
+        const int FontSize = 32;                // (bigger after playtesting; the rules follow it)
 
         RectTransform _root, _pad, _viewport, _content, _tabs;
         RawImage _rules;
@@ -36,6 +36,7 @@ namespace Hitman
             var dim = UIKit.Button(parent, "", new Color(0, 0, 0, 0.45f), Close);
             dim.GetComponent<Image>().sprite = null;
             _root = ((RectTransform)dim.transform).Stretch();
+            TextScale.Exclude(_root);
             dim.transition = Selectable.Transition.None;
 
             _pad = UIKit.Box(_root, "Pad", PaperColour, false).rectTransform;

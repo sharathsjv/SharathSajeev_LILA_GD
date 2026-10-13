@@ -24,13 +24,39 @@ namespace Hitman
             g.Eat(string.IsNullOrEmpty(what) ? "something" : what);
         }
 
-        // "meal" actions: pay for a meal and eat it there (arg "Burger:5").
+        // "meal" actions: pay for a meal and eat it there (arg "Burger:5", or "Burger:5:3" to stay full 3 hours).
         public static void Meal(string arg)
         {
             var parts = (arg ?? "a meal:5").Split(':');
             int price = parts.Length > 1 && int.TryParse(parts[1], out var p) ? p : 5;
+            float hours = parts.Length > 2 && float.TryParse(parts[2], System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out var h) ? h : 2f;
             if (!Game.I.Spend(price)) return;
-            Game.I.Eat(parts[0]);
+            Game.I.Eat(parts[0], 20, hours);
+        }
+
+        // A sit-down meal: pay at the counter, then take it to a free seat (a booth) and eat there.
+        public static void MealAtTable(string what, int price, float fullHours, Interior where)
+        {
+            var g = Game.I;
+            var player = g.Player.GetComponent<PlayerController>();
+            BlendSpot seat = null;
+            float best = float.MaxValue;
+            foreach (var s in BlendSpot.All)
+            {
+                if (!s.Sit || s.GetComponentInParent<Area>() != where || !Free(s.Stand.position)) continue;
+                float d = (s.Stand.position - g.Player.transform.position).sqrMagnitude + (s.Doing.Contains("booth") ? 0 : 100);   // (booths first)
+                if (d < best) { best = d; seat = s; }
+            }
+            if (!g.Spend(price)) return;
+            if (seat == null) { g.Eat(what, 30, fullHours); return; }                 // (nowhere to sit: eat at the bar)
+            player.GoThen(seat.Stand, true, () => g.Eat(what, 30, fullHours), true);
+        }
+
+        static bool Free(Vector3 at)
+        {
+            foreach (var p in Game.I.People)
+                if (p.Visible && (p.transform.position - at).sqrMagnitude < 0.6f * 0.6f) return false;
+            return true;
         }
 
         public static void StockFridge()

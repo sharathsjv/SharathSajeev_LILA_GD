@@ -72,6 +72,37 @@ namespace Hitman
             g.Changed();
         }
 
+        // Changed your mind: one thing you haven't paid for goes back on the shelf (only in the shop it came from).
+        public static bool CanPutBack(string item)
+        {
+            var shop = Here;
+            return shop != null && Game.I.S.unpaid.Contains($"{Id(shop)}|{item}");
+        }
+
+        // What you're carrying from this shop that you haven't paid for (each kind once).
+        public static System.Collections.Generic.List<string> Unpaid()
+        {
+            var list = new System.Collections.Generic.List<string>();
+            var shop = Here;
+            if (shop == null) return list;
+            foreach (var u in Game.I.S.unpaid)
+            {
+                var parts = u.Split('|');
+                if (parts[0] == Id(shop) && !list.Contains(parts[1])) list.Add(parts[1]);
+            }
+            return list;
+        }
+
+        public static void PutBackOne(string item)
+        {
+            var g = Game.I;
+            var shop = Here;
+            if (shop == null || !g.S.unpaid.Remove($"{Id(shop)}|{item}")) return;
+            g.S.items.Remove(item);
+            g.UI.Toast($"You put the {Items.Name(item).ToLower()} back on the shelf.");
+            g.Changed();
+        }
+
         // On the way out: anything unpaid is shoplifting.
         public static bool CanLeave()
         {

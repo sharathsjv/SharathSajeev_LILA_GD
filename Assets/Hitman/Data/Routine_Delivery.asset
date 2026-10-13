@@ -30,7 +30,7 @@ MonoBehaviour:
     opening: 0
     chatter: []
     overheard: 
-  - time: 19:00
+  - time: 19:15
     place: suburbs.house4.porch
     activity: 0
     options: []
@@ -40,7 +40,7 @@ MonoBehaviour:
     opening: 0
     chatter: []
     overheard: 
-  - time: 19:25
+  - time: 19:40
     place: suburbs.shops.back
     activity: 7
     options: []
