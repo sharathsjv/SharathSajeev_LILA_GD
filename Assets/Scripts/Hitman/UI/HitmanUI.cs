@@ -66,6 +66,8 @@ namespace Hitman
         bool _emailRead, _notesStarted;
         public BarShift BarShift { get; private set; }
         public WorldMarks Marks { get; private set; }
+        public NotebookView Notebook => _notebook;
+        public RectTransform NotebookButton => (RectTransform)notepadButton.transform;
         Tutorial _tutorial;
         bool _tape;
         WardrobeUI _wardrobe;
@@ -135,7 +137,14 @@ namespace Hitman
             // The title screen first; the first morning starts when they press Play.
             _menu98 = gameObject.AddComponent<MainMenu>();
             _menu98.Init(CanvasRoot);
-            _menu98.Show(() => { _started = true; if (Game.I.Day == 1) OnDayStarted(1); });
+            _menu98.Show(() => { Game.DeleteSave(); _started = true; if (Game.I.Day == 1) OnDayStarted(1); },
+                Game.HasSave ? (Action)(() =>
+                {
+                    _started = true;
+                    _emailRead = true;
+                    if (Game.I.ContinueFromSave()) Toast($"Welcome back. Day {Game.I.Day}, {Game.Clock(Game.I.Minutes)}.");
+                    else OnDayStarted(1);
+                }) : null);
         }
 
         string _notes = "";
@@ -146,11 +155,8 @@ namespace Hitman
             var st = Game.I.S;
             if (!st.Has("read.payment") || st.Has("replay.suggested")) return;
             st.Set("replay.suggested");
-            string how = st.Has("cause.slip") ? "a wet floor" : st.Has("cause.gas") ? "the gas" : "poison";
             ShowDialog("Contract complete",
-                $"Kevin's gone, and you got paid. You did it with {how}.\n\nBut there's more than one way to arrange an accident - " +
-                "his breakfast, the office coffee, the men's room floor, his lunch, his takeout, the gas at home. " +
-                "Restart and find a different way to eliminate Kevin?",
+                "Kevin's gone, and you got paid.\n\nThere's more than one way this could have gone. Start over and find another?",
                 new List<(string, Action)> { ("Restart", () => Game.I.RestartGame()), ("Keep playing", null) });
         }
 
@@ -165,10 +171,28 @@ namespace Hitman
             else Toast($"Day {day}. {Game.Clock(Game.I.Minutes)}");
         }
 
+        float _pocketsCheck;
+
         void Update()
         {
             var g = Game.I;
             if (g == null) return;
+            // The first time they're carrying something they can use (the newspaper...): how the Pockets tab works.
+            _pocketsCheck -= Time.unscaledDeltaTime;
+            if (_pocketsCheck <= 0)
+            {
+                _pocketsCheck = 1f;
+                if (_started && !MainMenu.Open && !Tutorial.Running && g.S.Has("tutorial.done") && !g.S.Has("tutorial.pockets") && !g.Busy && !Blocking)
+                    foreach (var item in g.S.items)
+                    {
+                        var acts = new List<(string, Action)>();
+                        Contract.I?.AddPocketActions(item, acts);
+                        acts.RemoveAll(a => a.Item1.StartsWith("Put it back"));
+                        if (acts.Count == 0) continue;
+                        _tutorial.BeginPockets(item, acts[0].Item1);
+                        break;
+                    }
+            }
             dayText.text = $"Day {g.Day}";
             timeText.text = g.ClockText;
             hungerFill.fillAmount = 1 - g.Hunger;
@@ -198,6 +222,9 @@ namespace Hitman
         }
 
         public void Toast(string msg) => _toasts.Enqueue(msg);
+
+        // Keep a showing toast in front of anything that keeps itself on top (the tutorial box).
+        public void ToastOnTop() { if (toastBox.activeSelf) toastBox.transform.SetAsLastSibling(); }
 
         // ---------- Action menu ----------
 

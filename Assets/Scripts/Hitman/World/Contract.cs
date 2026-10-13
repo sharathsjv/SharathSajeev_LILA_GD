@@ -383,16 +383,16 @@ namespace Hitman
                     if (!st.Has("card.taken")) m.AddWalk("Pocket the keycard", () => { Act("Picking Up Object"); if (g.Give("keycard")) { st.Set("card.taken"); ApplyWorld(); } });
                     break;
                 case Setup.Kind.Receptionist:
-                    if (st.Has("office.hired")) { m.Add("Say hello", () => g.UI.ShowDialog("Receptionist", "Morning! Your desk's the empty cabin at the back.", new List<(string, System.Action)> { ("Thanks.", null) }, s.transform)); break; }
+                    if (st.Has("office.hired")) { m.Add("Say hello", () => g.UI.ShowDialog("Pam (reception)", "Morning! Your desk's the empty cabin at the back.", new List<(string, System.Action)> { ("Thanks.", null) }, s.transform)); break; }
                     m.Add("Ask about the job ad", () =>
                     {
                         if (!g.S.Has($"pass.{g.Day}") && !g.S.Has("jobad"))
                         {
-                            g.UI.ShowDialog("Receptionist", "Do you have an appointment?", new List<(string, System.Action)> { ("OK", null) }, s.transform);
+                            g.UI.ShowDialog("Pam (reception)", "Do you have an appointment? We're only seeing people about the job ad.", new List<(string, System.Action)> { ("OK", null) }, s.transform);
                             return;
                         }
                         // the interview, such as it is
-                        g.UI.ShowDialog("Receptionist", "The ad! Great. Can you type? Can you sit at a desk from nine to five without stealing the staplers? You're hired. Start whenever - your desk's the empty cabin at the back.",
+                        g.UI.ShowDialog("Pam (reception)", "The ad! Great. Can you type? Can you sit at a desk from nine to five without stealing the staplers? You're hired. Start whenever - your desk's the empty cabin at the back.",
                             new List<(string, System.Action)>
                             {
                                 ("\"Wonderful.\"", () =>
@@ -456,7 +456,7 @@ namespace Hitman
         public void Serve(bool poisoned)
         {
             var g = Game.I;
-            Act("Putting Down");
+            if (!BarShift.Working) Act("Putting Down");             // (no time to spare for it mid-shift)
             g.S.Set(Today("job.served"));
             if (poisoned)
             {

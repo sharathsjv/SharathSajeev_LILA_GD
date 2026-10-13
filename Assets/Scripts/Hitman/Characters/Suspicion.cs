@@ -54,7 +54,8 @@ namespace Hitman
             var pos = player.transform.position;
             var r = Restricted.Of(g.Current);
             // Hired at the paper company: its floor is your office now.
-            if (r != null && r.Type == Restricted.Kind.StaffOnly && g.S.Has("office.hired") && g.Current.Id == "business.tower1.floor5") r = null;
+            if (r != null && r.Type == Restricted.Kind.StaffOnly && g.Current.Id == "business.tower1.floor5" && (g.S.Has("office.hired") || g.S.Has($"pass.{g.Day}"))) r = null;
+            // (sent up for the interview: nobody minds a visitor on their way to reception)
 
             // Security desk: checked once each time you come in.
             if (g.Current != _checked)

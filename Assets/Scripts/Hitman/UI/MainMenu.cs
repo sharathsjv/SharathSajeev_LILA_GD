@@ -11,7 +11,8 @@ namespace Hitman
         public static bool Open { get; private set; }
 
         RectTransform _root;
-        Action _play;
+        Action _play, _continue;
+        Button _playButton, _continueButton;
 
         public void Init(RectTransform parent)
         {
@@ -32,11 +33,29 @@ namespace Hitman
             var pr = (RectTransform)play.transform;
             pr.anchorMin = pr.anchorMax = new Vector2(0.5f, 0.24f);
             pr.sizeDelta = new Vector2(320, 96);
+            _playButton = play;
+            // Continue: back to the last note written in an earlier session (only when there is one)
+            var cont = Win98.Button98(_root, "Continue", () => _continue?.Invoke(), 40);
+            var cr = (RectTransform)cont.transform;
+            cr.anchorMin = cr.anchorMax = new Vector2(0.5f, 0.27f);
+            cr.sizeDelta = new Vector2(320, 96);
+            _continueButton = cont;
             _root.gameObject.SetActive(false);
         }
 
-        public void Show(Action play)
+        public void Show(Action play, Action cont = null)
         {
+            bool canContinue = cont != null;
+            _continueButton.gameObject.SetActive(canContinue);
+            _playButton.SetLabel(canContinue ? "New game" : "Play");
+            ((RectTransform)_playButton.transform).anchorMin = ((RectTransform)_playButton.transform).anchorMax = new Vector2(0.5f, canContinue ? 0.14f : 0.24f);
+            _continue = () =>
+            {
+                _root.gameObject.SetActive(false);
+                Open = false;
+                Game.I.ClockRunning = true;
+                cont?.Invoke();
+            };
             _play = () =>
             {
                 _root.gameObject.SetActive(false);

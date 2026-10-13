@@ -165,7 +165,7 @@ def mall():
     door.box(-W - 0.05, -W + 0.05, -1.5, 1.5, 0, 3.0, "GlassOffice").box(-W - 0.06, -W + 0.06, -0.03, 0.03, 0, 3.0, "Steel")
     door.done()
 
-    def front(name, x0, x1, y, open_shop, sign, s=-1, low_front=False):
+    def front(name, x0, x1, y, open_shop, sign, s=-1, low_front=False, sign_out=0.5):
         """Shop front along X at Y = y facing s (-1 = south / the concourse). Open shops: glass, a door gap and a
         sign above; closed ones: a shutter and CLOSED. low_front for the row nearest the camera."""
         top = 1.2 if low_front else 4.0
@@ -174,7 +174,13 @@ def mall():
             mid = (x0 + x1) / 2
             for (a, b) in ((x0 + 0.3, mid - 0.8), (mid + 0.8, x1 - 0.3)):
                 B.box(a, b, y - 0.06, y + 0.06, 0, 0.4, "Steel").box(a, b, y - 0.03, y + 0.03, 0.4, top - 0.1, "GlassOffice")
-            B.box(x0 + 0.3, x1 - 0.3, y - 0.08, y + 0.08, top - 0.1, top, "Steel")
+            # the rail along the top: over the door too on a tall front, but a low front's rail (waist high) stops
+            # either side of the door, or nobody could walk in
+            if low_front:
+                for (a, b) in ((x0 + 0.3, mid - 0.8), (mid + 0.8, x1 - 0.3)):
+                    B.box(a, b, y - 0.08, y + 0.08, top - 0.1, top, "Steel")
+            else:
+                B.box(x0 + 0.3, x1 - 0.3, y - 0.08, y + 0.08, top - 0.1, top, "Steel")
         else:
             B.box(x0 + 0.3, x1 - 0.3, y - 0.05, y + 0.05, 0, top, "MetalWhite")          # clean roller shutter
         for x in (x0, x1):
@@ -184,9 +190,10 @@ def mall():
         B.done()
         if sign:
             if low_front:     # a standing sign board in front of the low shop front
-                single(f"{name}Sign", (x0 + 2.0, x1 - 2.0, y + s * 0.5 - 0.04, y + s * 0.5 + 0.04, 1.3, 2.0, sign),
-                       (x0 + 2.1, x0 + 2.2, y + s * 0.5 - 0.04, y + s * 0.5 + 0.04, 0, 1.3, "Steel"),
-                       (x1 - 2.2, x1 - 2.1, y + s * 0.5 - 0.04, y + s * 0.5 + 0.04, 0, 1.3, "Steel"))
+                o = s * sign_out
+                single(f"{name}Sign", (x0 + 2.0, x1 - 2.0, y + o - 0.04, y + o + 0.04, 1.3, 2.0, sign),
+                       (x0 + 2.1, x0 + 2.2, y + o - 0.04, y + o + 0.04, 0, 1.3, "Steel"),
+                       (x1 - 2.2, x1 - 2.1, y + o - 0.04, y + o + 0.04, 0, 1.3, "Steel"))
             else:
                 single(f"{name}Sign", (x0 + 1.0, x1 - 1.0, y + s * 0.2 - 0.04, y + s * 0.2 + 0.04, top + 0.3, top + 1.3, sign))
 
@@ -196,7 +203,7 @@ def mall():
     front("Mall_FrontBar", 4.5, W, 5.0, True, "SignBar")
     front("Mall_FrontClosedSW", -W, -4.5, -5.0, False, "SignClosed", s=1, low_front=True)
     front("Mall_FrontCoffee", -4.5, 4.5, -5.0, False, "SignCoffee", s=1, low_front=True)   # (Daily Grind: bankrupt, shuttered)
-    front("Mall_FrontClosedSE", 4.5, W, -5.0, True, "SignBarber", s=1, low_front=True)   # (a barber now)
+    front("Mall_FrontClosedSE", 4.5, W, -5.0, True, "SignBarber", s=1, low_front=True, sign_out=2.8)   # (sign out of the doorway)   # (a barber now)
     for x in (-4.5, 4.5):
         wall(f"Mall_SplitN{x:.0f}", "y", x, 5.0, D, H, "Limestone")
         wall(f"Mall_SplitS{x:.0f}", "y", x, -D, -5.0, H, "Limestone", low=True)

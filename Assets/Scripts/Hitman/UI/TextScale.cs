@@ -34,6 +34,11 @@ namespace Hitman
                 int was = t.resizeTextForBestFit ? t.resizeTextMaxSize : t.fontSize;
                 int min = t.resizeTextForBestFit ? t.resizeTextMinSize : was;
                 int now = Mathf.RoundToInt(was * scale);
+                // Best fit only shrinks text that wraps and truncates: text in a real box gets that, so it shrinks to fit
+                // instead of spilling out (labels with no box of their own keep overflowing, as they were built to).
+                var size = t.rectTransform.rect.size;
+                if (size.y >= was * 0.9f && t.verticalOverflow == VerticalWrapMode.Overflow) t.verticalOverflow = VerticalWrapMode.Truncate;
+                if (size.x >= was * 2f && t.horizontalOverflow == HorizontalWrapMode.Overflow) t.horizontalOverflow = HorizontalWrapMode.Wrap;
                 t.resizeTextForBestFit = true;
                 t.resizeTextMinSize = Mathf.Max(1, min);
                 t.resizeTextMaxSize = now;

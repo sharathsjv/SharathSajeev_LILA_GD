@@ -29,6 +29,11 @@ namespace Hitman
 
         public bool IsOpen => _root != null && _root.gameObject.activeSelf;
         public int Tab => _tab;
+        // For the pockets tutorial: the tabs, the "use it" lines on the Pockets page, and whether one was used.
+        public RectTransform TabRect(int i) => _tabs != null && i < _tabs.childCount ? (RectTransform)_tabs.GetChild(i) : null;
+        readonly Dictionary<string, RectTransform> _pocketActions = new Dictionary<string, RectTransform>();
+        public RectTransform PocketAction(string label) => _pocketActions.TryGetValue(label, out var r) && r != null ? r : null;
+        public bool PocketActionUsed { get; set; }
 
         public void Init(RectTransform parent)
         {
@@ -252,7 +257,8 @@ namespace Hitman
                     var b = l.gameObject.AddComponent<Button>();
                     b.targetGraphic = l;
                     l.raycastTarget = true;
-                    b.onClick.AddListener(() => a());
+                    _pocketActions[label] = l.rectTransform;
+                    b.onClick.AddListener(() => { PocketActionUsed = true; a(); });
                 }
             }
             var known = new List<string>();

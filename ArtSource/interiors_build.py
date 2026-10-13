@@ -277,8 +277,9 @@ def floor5():
     B.box(-1.0, 1.0, 5.42, 5.58, 2.3, 2.4, "Steel")
     B.done()
     single("Off_SignPaper", (-1.6, 1.6, 5.46, 5.54, 2.45, 2.9, "SignPaper"))
-    single("Off_ReceptionDesk", (2.0, 4.0, 4.3, 4.9, 0, 1.0, "WoodDarkPolish"))
-    chair("Off_ReceptionChair", 3.0, 3.8, (0, 1), office=True)
+    # reception: out in the lift lobby, east of the lifts; the receptionist sits behind it facing the lift doors
+    single("Off_ReceptionDesk", (4.7, 5.3, 6.6, 8.6, 0, 1.0, "WoodDarkPolish"))
+    chair("Off_ReceptionChair", 5.85, 7.6, (-1, 0), office=True)
     wall("Off_WallE", "y", W, -D, N, H, "PaintOffice", [(y, y + 2.6, 0.5, 2.7) for y in (-8.5, -5.6, -2.7, 0.2, 3.1, 6.0, 8.2)], glass="GlassOffice")
     wall("Off_WallS", "x", -D, -W, W, H, "PaintOffice", low=True)
     wall("Off_WallW", "y", -W, -D, N, H, "PaintOffice", low=True)

@@ -166,6 +166,7 @@ namespace Hitman
             var g = Game.I;
             if (Flat(g.Player.transform.position - s.seat).magnitude < 0.7f) return false;
             foreach (var p in g.People) if (p.AreaId == _bar.Id && Flat(p.transform.position - s.seat).magnitude < 0.7f) return false;
+            if (PlayerController.SeatTaken(s.seat)) return false;                          // (staff, regulars, other customers)
             return true;
         }
 
@@ -225,7 +226,6 @@ namespace Hitman
         void Pour(string item)
         {
             var g = Game.I;
-            g.Player.PlayAction(item == "Wings" || item == KevinsLunch ? "Picking Up Object" : "Bartending");
             if (Holding != null && Holding != item) g.UI.Toast($"You tip the {Holding.ToLower()} down the sink.");
             Holding = item;
         }
@@ -234,7 +234,6 @@ namespace Hitman
         {
             var g = Game.I;
             if (Holding == null || c.Now != BarCustomer.State.Waiting) return;
-            g.Player.PlayAction("Putting Down");
             if (Holding != c.Wants)
             {
                 g.UI.Say(c.transform, Holding == KevinsLunch ? "That's not mine." : "That's not what I ordered.", 1.6f);

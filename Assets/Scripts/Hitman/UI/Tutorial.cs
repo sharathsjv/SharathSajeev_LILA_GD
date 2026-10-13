@@ -246,6 +246,7 @@ namespace Hitman
             _box.SetAsLastSibling();
             _frame.SetAsLastSibling();
             _arrow.SetAsLastSibling();
+            Game.I.UI.ToastOnTop();                                       // (messages like "job accepted" stay readable)
             if (!_blocker.gameObject.activeSelf) _blocker.SetSiblingIndex(0);
 
             var cam = Game.I.Cam.GetComponent<Camera>();
@@ -277,6 +278,43 @@ namespace Hitman
                     img.color = new Color(1f, 0.85f, 0.1f, Mathf.Repeat(Time.unscaledTime, 0.8f) < 0.5f ? 1f : 0.35f);
             }
             _frame.gameObject.SetActive(showFrame);
+        }
+
+        // ---------- later: the pockets ----------
+
+        // The first time the player carries something they can use: open the notebook, the Pockets tab, use it.
+        public void BeginPockets(string item, string action)
+        {
+            var g = Game.I;
+            if (Running || g.S.Has("tutorial.pockets")) return;
+            g.S.Set("tutorial.pockets");
+            StartCoroutine(Pockets(item, action));
+        }
+
+        IEnumerator Pockets(string item, string action)
+        {
+            var g = Game.I;
+            var ui = g.UI;
+            var nb = ui.Notebook;
+            Running = true;
+            nb.PocketActionUsed = false;
+            yield return Explain($"You're carrying something you can use: <b>{Items.Name(item)}</b>.\nEverything you carry is kept in your notebook, on the <b>Pockets</b> tab.", null);
+            yield return Instruct("Open your notebook.", () => nb.IsOpen, screen: () => ui.NotebookButton);
+            yield return Instruct("Tap the Pockets tab.", () => nb.IsOpen && nb.Tab == 2, screen: () => nb.TabRect(2));
+            yield return Instruct($"Tap \"{action}\" to use it.", () => nb.PocketActionUsed || !nb.IsOpen, screen: () => nb.PocketAction(action));
+            EndExtra();
+        }
+
+        void EndExtra()
+        {
+            Running = false;
+            _worldTarget = null;
+            _uiTarget = null;
+            _box.gameObject.SetActive(false);
+            _blocker.gameObject.SetActive(false);
+            _arrow.gameObject.SetActive(false);
+            _frame.gameObject.SetActive(false);
+            Game.I.ClockRunning = true;
         }
 
         // ---------- the brief, full screen ----------

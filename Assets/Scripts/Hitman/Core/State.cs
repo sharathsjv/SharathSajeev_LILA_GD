@@ -135,6 +135,8 @@ namespace Hitman
     }
 
     // A saved moment to go back to when the player is caught: made every time they write something new in the notebook.
+    // The latest one is also kept between sessions (Continue on the title screen).
+    [Serializable]
     public class Checkpoint
     {
         public int day;

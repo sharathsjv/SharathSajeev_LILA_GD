@@ -200,6 +200,7 @@ namespace Hitman
             ui.Toast(opening > 0 ? "Noted - and you've got an idea. Check the notebook." : "Noted in your notebook.");
             Changed();
             SaveCheckpoint();
+            WriteSave();
             return true;
         }
 
@@ -216,6 +217,39 @@ namespace Hitman
                 alive = People.Select(p => p.Alive).ToArray(),
             };
             _checkpoint.state.unpaid.Clear();
+        }
+
+        // ---------- Saving between sessions: the last note's checkpoint ----------
+
+        const string SaveKey = "hitman.save";
+
+        public static bool HasSave
+        {
+            get { try { return PlayerPrefs.HasKey(SaveKey); } catch { return false; } }
+        }
+
+        void WriteSave()
+        {
+            try { PlayerPrefs.SetString(SaveKey, JsonUtility.ToJson(_checkpoint)); PlayerPrefs.Save(); } catch { }
+        }
+
+        public static void DeleteSave()
+        {
+            try { PlayerPrefs.DeleteKey(SaveKey); PlayerPrefs.Save(); } catch { }
+        }
+
+        // Back to where the last note was written, in an earlier session. False if there's no usable save.
+        public bool ContinueFromSave()
+        {
+            try
+            {
+                var c = JsonUtility.FromJson<Checkpoint>(PlayerPrefs.GetString(SaveKey, ""));
+                if (c == null || c.state == null || Area(c.area) == null) return false;
+                _checkpoint = c;
+                Restore(c);
+                return true;
+            }
+            catch { return false; }
         }
 
         // Caught: say why, then go back to the last checkpoint.
@@ -266,6 +300,7 @@ namespace Hitman
         // Start over from the title screen: a fresh first morning, nothing carried over.
         public void RestartGame()
         {
+            DeleteSave();
             Time.timeScale = 1;
             var scene = gameObject.scene;
             if (scene.buildIndex >= 0) UnityEngine.SceneManagement.SceneManager.LoadScene(scene.buildIndex);
@@ -383,6 +418,48 @@ namespace Hitman
         }
 
         public void StopWork() => _stopWork = true;
+
+        // ---------- Waiting: let time pass (sitting in a bar, loitering) until they tap, or they get hungry ----------
+
+        public bool Waiting { get; private set; }
+        const float HungryAt = 0.6f;
+
+        public void WaitHere()
+        {
+            if (Busy) return;
+            if (Hunger >= HungryAt) { ui.Toast("You're too hungry to sit around. Eat something first."); return; }
+            var r = Restricted.Of(Current);
+            var pc = player.GetComponent<PlayerController>();
+            if (r != null && r.Type != Restricted.Kind.Security && pc.Blending == null && !S.Has("office.hired"))
+            { ui.Toast("Not here - someone would notice you hanging around."); return; }
+            StartCoroutine(Wait());
+        }
+
+        IEnumerator Wait()
+        {
+            Busy = true;
+            Waiting = true;
+            _stopWork = false;
+            var pc = player.GetComponent<PlayerController>();
+            if (pc.Following != null) pc.StopFollow();
+            player.Stop();
+            ui.ShowSkip(true, "Waiting... (tap to stop)", true);
+            _ffRate = workHoursPerSecond * 60f / MinutesPerRealSecond;
+            Time.timeScale = Mathf.Clamp(_ffRate, 1f, 8f);
+            string why = null;
+            while (!_stopWork && !Failing)
+            {
+                if (Hunger >= HungryAt) { why = "Your stomach's growling. Time to eat."; break; }
+                if (Minutes >= passOutHour * 60 - 60) { why = "It's late. You should get to bed."; break; }
+                yield return null;
+            }
+            _ffRate = 1;
+            Time.timeScale = 1;
+            ui.ShowSkip(false, "", true);
+            Waiting = false;
+            Busy = false;
+            if (why != null) ui.Toast(why);
+        }
 
         IEnumerator Work(float endHour)
         {

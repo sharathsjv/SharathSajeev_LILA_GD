@@ -510,6 +510,12 @@ namespace Hitman
             _watchTime.rectTransform.Anchor(0, 0.32f, 1, 0.66f);
             _watchInfo = UIKit.Label(face.transform, "", 24, new Color(0.6f, 0.9f, 0.6f), TextAnchor.MiddleCenter);
             _watchInfo.rectTransform.Anchor(0.1f, 0.1f, 0.9f, 0.34f);
+            // let time pass from here too (as well as by tapping yourself)
+            var wait = Win98.Button98(_watch, "Wait (tap to stop)", () => { _watch.gameObject.SetActive(false); Game.I.WaitHere(); }, 26);
+            var wr = (RectTransform)wait.transform;
+            wr.anchorMin = wr.anchorMax = new Vector2(0.5f, 0.5f);
+            wr.sizeDelta = new Vector2(300, 64);
+            wr.anchoredPosition = new Vector2(30, -230);
             _watch.gameObject.SetActive(false);
         }
 

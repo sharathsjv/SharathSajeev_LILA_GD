@@ -57,6 +57,7 @@ namespace Hitman
         public void Blend(BlendSpot spot)
         {
             Blending = spot;
+            if (spot.Sit && !Game.I.S.Has("tip.wait")) { Game.I.S.Set("tip.wait"); Game.I.UI.Toast("Tip: tap yourself to wait and let time pass."); }
             _mover.Seated = spot.Sit;
             if (!string.IsNullOrEmpty(spot.Pose)) _mover.SetPose(spot.Pose);
         }
@@ -131,7 +132,7 @@ namespace Hitman
             var p = Pointer.current;
             if (p == null) return;
             var pos = p.position.ReadValue();
-            if (p.press.wasPressedThisFrame && g.AtDesk) { g.StopWork(); return; }       // a tap gets you up from the desk
+            if (p.press.wasPressedThisFrame && (g.AtDesk || g.Waiting)) { g.StopWork(); return; }   // a tap gets you up from the desk / stops waiting
             if (p.press.wasPressedThisFrame)
             {
                 bool overUI = OverUI(pos);
@@ -175,6 +176,13 @@ namespace Hitman
             if (n == 0) return;
             Array.Sort(_tapHits, 0, n, HitDistance);
             int pick = -1;
+            // Tapped yourself (first thing under the finger): let some time pass.
+            if (_tapHits[0].collider.transform.IsChildOf(transform) && !g.Busy)
+            {
+                var self = new List<(string, Action)> { ("Wait here (tap to stop)", g.WaitHere) };
+                g.UI.ShowActions("You", self, pos);
+                return;
+            }
             for (int i = 0; i < n; i++)
             {
                 var c = _tapHits[i].collider;
@@ -322,10 +330,17 @@ namespace Hitman
                 return;
             }
             var spot = u.StandPoint != null ? u.StandPoint : u.transform;
+            // Sitting in a blend spot (booth, bar stool...): head for its seat, not just the Usable's stand point.
+            var blend = a.id == "blend" ? u.GetComponent<BlendSpot>() : null;
+            if (blend != null && blend.Sit) spot = blend.Stand;
+            if (a.sit && SeatTaken(spot.position)) { Game.I.UI.Toast("Someone's sitting there."); return; }
             _mover.WalkTo(spot.position, () =>
             {
-                if (u.StandPoint != null) transform.rotation = u.StandPoint.rotation;
+                if (blend != null && blend.Sit) transform.rotation = spot.rotation;
+                else if (u.StandPoint != null) transform.rotation = u.StandPoint.rotation;
                 else _mover.Face(u.transform.position);
+                // Seats are off the walkable floor (a booth's bench, a couch): slide the last bit onto it.
+                if (a.sit && a.thenGoTo == null) transform.position = new Vector3(spot.position.x, transform.position.y, spot.position.z);
                 if (a.thenGoTo == null)
                 {
                     _mover.Seated = a.sit;
@@ -339,6 +354,19 @@ namespace Hitman
                     Perform(u, a);
                 });
             });
+        }
+
+        // Anyone (story character, staff, a bar customer) already sitting right there?
+        public static bool SeatTaken(Vector3 seat, CharacterMover except = null)
+        {
+            foreach (var m in FindObjectsByType<CharacterMover>(FindObjectsSortMode.None))
+            {
+                if (m == except || m == Game.I.Player || !m.isActiveAndEnabled) continue;
+                var d = m.transform.position - seat;
+                d.y = 0;
+                if (d.sqrMagnitude < 0.6f * 0.6f) return true;
+            }
+            return false;
         }
 
         bool ShelfSpot(Usable u, out Vector3 stand, out Vector3 face)

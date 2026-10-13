@@ -52,12 +52,7 @@ namespace Hitman
             player.GoThen(seat.Stand, true, () => g.Eat(what, 30, fullHours), true);
         }
 
-        static bool Free(Vector3 at)
-        {
-            foreach (var p in Game.I.People)
-                if (p.Visible && (p.transform.position - at).sqrMagnitude < 0.6f * 0.6f) return false;
-            return true;
-        }
+        static bool Free(Vector3 at) => !PlayerController.SeatTaken(at);
 
         public static void StockFridge()
         {
